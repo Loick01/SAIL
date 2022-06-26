@@ -36,6 +36,7 @@
 %token DOT
 %token ASSIGN
 %token EXTERN
+%token VARARGS
 %token METHOD PROCESS
 %token STRUCT ENUM
 %token VAR SIGNAL 
@@ -81,20 +82,28 @@ defn:
     {Struct ({s_pos=$startpos;s_name = id; s_generics = g; s_fields = f})}
 | ENUM name=ID generics=generic LBRACE fields = separated_list(COMMA, enum_elt) RBRACE
     {Enum {e_pos=$startpos;e_name=name; e_generics=generics; e_injections=fields}}
-| proto = fun_sig body = block {Method {m_proto=proto; m_body = body}}
+
+| proto = fun_sig body = block {Method [{m_proto=proto; m_body = Either.right body}]}
 
 | PROCESS name = UID generics=generic LPAREN interface=interface RPAREN  body=block
     {Process ({p_pos=$startpos;p_name=name; p_generics=generics; p_interface=interface; p_body=body})}
 
-| EXTERN LBRACE protos = separated_list(SEMICOLON,fun_sig) RBRACE {Ffi protos}
+| EXTERN lib=extern_lib LBRACE protos = separated_list(SEMICOLON,fun_sig) RBRACE  {let protos = List.map (fun p -> {m_proto=p; m_body = Either.left lib}) protos in Method protos}
+
 ;
 
+extern_lib:
+| {None}
+| lib = STRING {Some lib}
 
 
-fun_sig : METHOD name=ID generics=generic LPAREN params=separated_list(COMMA, id_colon(sailtype)) RPAREN rtype=returnType 
-        {({pos=$startpos;name=name; generics=generics; params=params ; rtype=rtype})}
+fun_sig : METHOD name=ID generics=generic LPAREN params=separated_list(COMMA, id_colon_mut(sailtype)) variadic=is_variadic RPAREN rtype=returnType 
+        {({pos=$startpos;name; generics; params; variadic; rtype=rtype })}
 ;
 
+is_variadic:
+| {false}
+| VARARGS {true}
 
 enum_elt :
 | id = UID {(id, [])}
@@ -144,6 +153,11 @@ expression :
 
 id_colon(X):
 | id=ID COLON x=X {(id,x)}; 
+
+id_colon_mut(X):
+| id=ID COLON MUT x=X {(id,(true,x))}
+| id=ID COLON x=X {(id,(false,x))}
+; 
 
 literal :
 | TRUE {LBool(true) }

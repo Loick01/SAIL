@@ -5,9 +5,11 @@ open IrHir.AstHir
 
 type llvm_args = { c:llcontext; b:llbuilder;m:llmodule; }
 
+type external_call = llvalue array -> llvm_args -> llvalue * llvalue array
+
 type 'a string_assoc = (string * 'a) list
 
-type sailor_args = sailtype string_assoc
+type sailor_args = (bool * sailtype) string_assoc
 
 type sailor_decl = 
 {
@@ -18,8 +20,9 @@ type sailor_decl =
 type sailor_method = 
 {
 	decl : sailor_decl ;
-	body: AstParser.expression statement;
-  generics : sailor_args
+	body: (string option, AstParser.expression statement) Either.t;
+  generics : sailor_args;
+  variadic : bool;
 }
 
 type sailor_process = 
@@ -37,7 +40,8 @@ type sailor_function =
   r_type : sailtype option;
   args : sailor_args;
   generics : string list;
-  body : AstParser.expression statement option;
+  body :  (string option, AstParser.expression statement) Either.t;
+  variadic: bool;
   ty : function_type
 }
 
@@ -62,7 +66,7 @@ let mangle_method_name (name:string) (args: sailtype list ) : string =
   let back = List.fold_left (fun s t -> s ^ string_of_sailtype (Some t) ^ "_"  ) "" args in
   let front = "_" ^ name ^ "_" in
   let res = front ^ back in
-  (* Logs.debug (fun m -> m "renamed %s to %s" name res); *)
+  Logs.debug (fun m -> m "renamed %s to %s" name res);
   res
 
 
@@ -81,7 +85,7 @@ let degenerifyType (t: sailtype) (generics: sailor_args) : sailtype =
   | GenericType n -> 
     begin
       match List.assoc_opt n generics with
-      | Some t -> aux t
+      | Some (_,t) -> aux t
       | None -> Printf.sprintf "generic type %s not present in the generics list" n |> failwith
     end
   in

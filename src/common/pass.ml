@@ -4,8 +4,9 @@ open TypesCommon
 type function_proto = 
 {
   ret : sailtype option;
-  args : (string * sailtype) list;
+  args : (string * (bool * sailtype)) list;
   generics : string list;
+  variadic : bool;
 }
 
 type enum_proto = 
@@ -32,8 +33,10 @@ module DeclEnv = Env.DeclarationsEnv (
 
 module TypeEnv = Env.VariableEnv(
   struct 
-    type t = sailtype
-    let string_of_var v = string_of_sailtype (Some v)
+    type t = bool * sailtype
+    let string_of_var (mut,v) = Printf.sprintf "%s %s" 
+    (if mut then "mut" else "")
+    (string_of_sailtype (Some v))
   end
 ) (
   DeclEnv
@@ -60,45 +63,25 @@ struct
 
 
   let collect_declarations (m :T.in_body sailModule) : DeclEnv.t =
-
-    let register_external  name ret args generics (env:DeclEnv.t)  : DeclEnv.t  = 
-    let args = List.mapi (fun i t -> (string_of_int i,t)) args  in
-    DeclEnv.add_declaration env name (Method {ret;args;generics})
-    in
-
     DeclEnv.empty () |> fun d -> 
 
     List.fold_left (
       fun acc m -> 
         let ret = m.m_proto.rtype 
         and args = m.m_proto.params 
-        and generics = m.m_proto.generics in 
-        DeclEnv.add_declaration acc m.m_proto.name (Method {ret;args;generics})
-    ) d m.methods |> fun d ->  
-
-    List.fold_left (
-      fun acc m -> 
-        let ret = m.rtype 
-        and args = m.params 
-        and generics = m.generics in 
-        DeclEnv.add_declaration acc m.name (Method {ret;args;generics})
-    ) d m.ffi 
-      
-    (* fixme : generalize *)
-    |> register_external "print_int"  None [Int] [] 
-    |> register_external "print_newline"  None [] []
-    |> register_external "print_string"  None [String] []
-    |> register_external "printf"  None [String; GenericType "T"] ["T"]
-
+        and generics = m.m_proto.generics 
+        and variadic = m.m_proto.variadic in 
+        DeclEnv.add_declaration acc m.m_proto.name (Method {ret;args;generics;variadic})
+    ) d m.methods 
 
     |> fun d ->
 
     List.fold_left (
       fun acc p -> 
         let ret = None
-        and args = fst p.p_interface
+        and args = List.map (fun (a,t) -> a,(false,t)) (fst p.p_interface)
         and generics = p.p_generics in 
-        DeclEnv.add_declaration acc p.p_name (Process {ret;args;generics})
+        DeclEnv.add_declaration acc p.p_name (Process {ret;args;generics;variadic=false})
     ) d m.processes |> fun d -> 
 
     List.fold_left (
@@ -116,15 +99,18 @@ struct
     List.fold_left (fun m (n,t) -> TypeEnv.declare_var m n t) env args
 
   let translate_method (m:T.in_body method_defn) (decls : DeclEnv.t) : T.out_body method_defn = 
+    let open Monad.MonadEither.Make(struct type t = string option  end) in
     let start_env = get_start_env decls m.m_proto.params in
-    { m with m_body = T.translate m.m_body start_env m.m_proto.generics}
+    let m_body = m.m_body >>| fun b -> T.translate b start_env m.m_proto.generics in
+    { m with m_body}
 
   let translate_process (p : T.in_body process_defn) (decls : DeclEnv.t) : T.out_body process_defn = 
-    let start_env = get_start_env decls (p.p_interface |> fst) in
+    let start_env = get_start_env decls (List.map (fun (a,t) -> a,(false,t)) (fst p.p_interface)) in
     { p with p_body = T.translate p.p_body start_env p.p_generics}
 
     
   let translate_module (m: T.in_body sailModule) : T.out_body sailModule = 
+    try
     let decls = collect_declarations m in
     (* DeclEnv.print_declarations decls; *)
     {
@@ -132,5 +118,6 @@ struct
       methods = List.map (fun m -> translate_method m decls) m.methods ; 
       processes = List.map (fun p -> translate_process p decls) m.processes 
     }
+    with Failure s -> Printf.sprintf "Problem with pass : %s " s |> failwith
     
 end

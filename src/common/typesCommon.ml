@@ -105,14 +105,15 @@ type method_sig =
   pos : loc;
   name : string; 
   generics : string list;
-  params : (string * sailtype) list;
+  params : (string * (bool * sailtype)) list;
+  variadic : bool;
   rtype : sailtype option;
 }
 
 type 'a method_defn =  
 {
   m_proto : method_sig;
-  m_body : 'a
+  m_body : (string option,'a) Either.t
 }
 
 type 'a sailModule =
@@ -122,7 +123,6 @@ type 'a sailModule =
   enums : enum_defn list;
   methods : 'a method_defn list ;
   processes : 'a process_defn list;
-  ffi : method_sig list
 }
 
 type moduleSignature = unit sailModule
@@ -130,6 +130,6 @@ type moduleSignature = unit sailModule
 let signatureOfModule m =
 {
   m with
-  methods = List.map (fun m -> {m with m_body=()}) m.methods;
+  methods = List.map (fun m -> {m with m_body=Either.Right ()}) m.methods;
   processes = List.map (fun p-> {p with p_body=()}) m.processes
 }

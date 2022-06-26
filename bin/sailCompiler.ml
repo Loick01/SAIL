@@ -2,7 +2,6 @@ open CliCommon
 open Cmdliner
 open Llvm
 open Llvm_target
-open Common
 open IrThir
 open IrHir
 open Compiler
@@ -13,7 +12,7 @@ open CompilerEnv
 let error_handler err = "LLVM ERROR: " ^ err |> print_endline
 
 
-let moduleToIR (name:string) (funs,exts : sailor_functions * sailor_external string_assoc) (dump_decl:bool) : llmodule  = 
+let moduleToIR (name:string) (funs : sailor_functions) (dump_decl:bool) : llmodule  = 
   let module FieldMap = Map.Make (String) in
 
   let llc = global_context () in
@@ -26,7 +25,7 @@ let moduleToIR (name:string) (funs,exts : sailor_functions * sailor_external str
   let env = SailEnv.empty globals in
   
   FieldMap.iter (fun name f  -> 
-    let f = methodToIR llc llm env name f exts in
+    let f = methodToIR llc llm env name f  in
     Llvm_analysis.assert_valid_function f
     ) funs;
   
@@ -35,7 +34,7 @@ let moduleToIR (name:string) (funs,exts : sailor_functions * sailor_external str
   | Some reason -> print_endline reason; llm
 
 
-let init_llvm (llm : llmodule) : (Target.t * TargetMachine.t) =
+let init_llvm_backend (llm : llmodule) : (Target.t * TargetMachine.t) =
   Llvm_all_backends.initialize (); 
   let target_triple = Target.default_triple () in
   let target = Target.by_triple target_triple in 
@@ -59,13 +58,18 @@ let add_passes (pm : [`Module] PassManager.t) : unit  =
   Llvm_scalar_opts.add_cfg_simplification pm
 
 
-let compile (llm:llmodule) (module_name : string) (target, machine) : int =
+let compile (llm:llmodule) (module_name : string) (target, machine) (as_lib:bool): int =
   let objfile = module_name ^ ".o" in 
   if Target.has_asm_backend target then
     begin
       TargetMachine.emit_to_file llm ObjectFile objfile machine;
-      Sys.command ( "clang " ^ objfile ^ " -o " ^ module_name) |> ignore;
-      "rm " ^ objfile |>  Sys.command
+      if not as_lib then 
+        begin
+        if (Option.is_none (lookup_function "main" llm)) then failwith ("no Main process found, can't compile as executable");
+        "clang " ^ objfile ^ " -o " ^ module_name |> Sys.command |> ignore;
+        "rm " ^ objfile |>  Sys.command
+        end
+      else 0
     end
   else
     failwith ("target " ^ target_triple  llm ^ "doesn't have an asm backend, can't generate object file!")
@@ -88,7 +92,8 @@ let execute (llm:llmodule) =
   main ();
   Llvm_executionengine.dispose ee (* implicitely disposes the module *)
 
-let sailor (files: string list) (intermediate:bool) (jit:bool) (noopt:bool) (dump_decl:bool) () = 
+let sailor (files: string list) (intermediate:bool) (jit:bool) (noopt:bool) (dump_decl:bool) (as_lib:bool) () = 
+  let open Common in
   let rec aux = function
   | f::r -> 
     let file_r = open_in f in
@@ -110,9 +115,9 @@ let sailor (files: string list) (intermediate:bool) (jit:bool) (noopt:bool) (dum
 
         let funs = type_check_module sail_module in
         let llm = moduleToIR module_name funs dump_decl in
-        let tm = init_llvm llm in
+        let tm = init_llvm_backend llm in
 
-        if not noopt then 
+        if not noopt && not as_lib then 
           begin
             let open PassManager in
             let pm = create () in add_passes pm;
@@ -126,7 +131,7 @@ let sailor (files: string list) (intermediate:bool) (jit:bool) (noopt:bool) (dum
 
         if not (intermediate || jit) then
           begin
-            let ret = compile llm module_name tm in
+            let ret = compile llm module_name tm as_lib in
             if ret <> 0 then
               (Printf.sprintf "clang couldn't execute properly (error %i)" ret |> failwith);
           end;
@@ -160,9 +165,15 @@ let dump_decl_arg =
   Arg.flag info |> Arg.value
   
   
+let as_lib_arg = 
+  let doc = "compile as a library (prevents executable generation and disables optimisations for now)" in
+  Arg.(value & flag & info ["as-lib"] ~doc)
+
 let cmd =
   let doc = "SaiLOR, the SaIL cOmpileR" in
   let info = Cmd.info "sailor" ~doc in
-  Cmd.v info Term.(ret (const sailor $ sailfiles_arg $ intermediate_arg $ jit_arg $ noopt_arg $ dump_decl_arg $ setup_log_term))
+  Cmd.v info Term.(ret (const sailor $ sailfiles_arg $ intermediate_arg $ jit_arg $ noopt_arg $ dump_decl_arg $ as_lib_arg $ setup_log_term))
 
-let () = Cmd.eval cmd |> exit
+let () = 
+Printexc.record_backtrace true;
+Cmd.eval cmd |> exit

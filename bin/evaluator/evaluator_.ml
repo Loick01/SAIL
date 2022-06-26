@@ -319,6 +319,12 @@ let reduce (p : Intermediate.statement method_defn list) (c : command) (env : en
             let* h' = ExternalsImplementation.extern h0 x real_params in
             return (Continue, Env.emptyFrame, h')
         | Some callee -> (
+            match callee.m_body with
+            | Either.Left _ -> 
+                (* fixme : merge externalsimplementation into method (None = error) *)
+                let* h' = ExternalsImplementation.extern h0 x real_params in
+                return (Continue, Env.emptyFrame, h')
+            | Either.Right b ->
             let formal_params = List.map fst callee.m_proto.params in
             let l, h' = freshn h0 (List.length real_params) in
             let varmap =
@@ -331,7 +337,7 @@ let reduce (p : Intermediate.statement method_defn list) (c : command) (env : en
               foldLeftM setLocation h' (List.combine l values)
             in
             let w = List.fold_left Env.merge Env.emptyFrame varmap in
-            let c = Domain.initCommand callee.m_body in
+            let c = Domain.initCommand b in
             let* r, w, h = aux (Block (c, w)) Env.empty h'' in
             match r with
             | Ret -> return (Continue, w, h)

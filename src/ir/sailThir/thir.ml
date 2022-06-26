@@ -38,7 +38,7 @@ let degenerifyType (t: sailtype) (generics: (string * sailtype ) list) : sailtyp
 (*todo : generalize*)
 let type_of_binOp (op:binOp) (operands_type:sailtype) : sailtype = match op with
   | Lt | Le | Gt | Ge | Eq | NEq | And | Or -> Bool
-  | Plus | Mul | Div | Minus | Rem -> operands_type
+  | Plus | Mul | Div | Minus | Rem -> (* check float or int *) operands_type
 
 module Pass : Pass.Body with
               type in_body = AstParser.expression AstHir.statement and   
@@ -85,8 +85,9 @@ struct
     match Pass.TypeEnv.get_function env (Method name)  with
     | Some (Method f) -> 
       begin
+        let args = if f.variadic then List.filteri (fun i _ -> i < (List.length f.args)) args else args in
         let resolved_generics = List.fold_left2 (
-          fun g ca (_,a) -> 
+          fun g ca (_,(_,a)) -> 
             matchArgParam (extract_type ca) a f.generics g |> snd
         ) ([]) args f.args in
         (* List.iter (fun (s,r) -> Printf.fprintf stdout "generic %s resolved to %s\n" s (string_of_sailtype (Some r)) ) resolved_generics; *)
@@ -98,7 +99,7 @@ struct
 
   let translate_expression (e : AstParser.expression) (te: Pass.TypeEnv.t) (generics : string list): AstThir.expression  = 
   let rec aux = function
-    | AstParser.Variable (l,id) -> let t = Pass.TypeEnv.get_var te id in AstThir.Variable(l,t,id)
+    | AstParser.Variable (l,id) -> let t = Pass.TypeEnv.get_var te id in AstThir.Variable(l,snd t,id)
     | AstParser.Deref (l,e) -> let e = aux e in
       begin
         match e with
@@ -117,7 +118,7 @@ struct
 
     | AstParser.StructRead (_l,_struct_exp,_field) -> failwith "todo: struct read"
     | AstParser.Literal (l,li) -> let t = sailtype_of_literal li in AstThir.Literal(l,t,li)
-    | AstParser.UnOp (l,op,e) -> let e = aux e in AstThir.UnOp (l, extract_type e,op,e)
+    | AstParser.UnOp (l,op,e) -> let e = aux e in AstThir.UnOp (l, extract_type e,op,e) (* check float or int and can return bool *)
     | AstParser.BinOp (l,op,le,re) ->  let le = aux le and re = aux re in
       let lt = extract_type le and rt = extract_type re in
       let t = matchArgParam lt rt generics [] |> fst in
@@ -155,7 +156,7 @@ struct
           | (None,Some t) -> extract_type t
           | (None,None) -> failwith "can't infere type with no expression"
           in
-          let te' = Pass.TypeEnv.declare_var te id var_type in 
+          let te' = Pass.TypeEnv.declare_var te id (mut,var_type) in 
           AstHir.DeclVar (loc,mut,id,t,optexp),te'
         end
       | AstHir.DeclSignal(loc, s) -> AstHir.DeclSignal(loc, s),te
@@ -183,7 +184,7 @@ struct
         AstHir.If(loc, cond_exp, aux then_s te |> fst, else_s),te
 
 
-      | AstHir.While(loc,e,c) -> AstHir.While(loc, translate_expression e te generics, aux c te |> fst),te
+      | AstHir.While(loc,e,c) -> AstHir.While(loc, translate_expression e te generics, aux c te |> fst),te (*check boolean *)
       | AstHir.Case(loc, e, _cases) -> AstHir.Case (loc, translate_expression e te generics, []),te
       | AstHir.Invoke(loc, ign, id, el) -> 
         let el = List.map (fun e -> translate_expression e te generics) el in

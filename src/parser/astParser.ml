@@ -64,23 +64,25 @@ type statement =
 type defn =
   | Struct of struct_defn
   | Enum of enum_defn
-  | Method of statement method_defn
+  | Method of (statement method_defn) list
   | Process of statement process_defn
-  | Ffi of method_sig list
 
 let mk_program name l =
   let rec aux l =
     match l with
-      [] -> ([],[],[],[],[])
+      [] -> ([],[],[],[])
     | d::l ->
-      let (s,e,m,p,ext) = aux l in
+      let (s,e,m,p) = aux l in
         match d with
-          | Struct d -> (d::s,e,m,p,ext)
-          | Enum d -> (s,d::e,m,p,ext)
-          | Method d -> (s,e,d::m,p,ext)
-          | Process d -> (s,e,m,d::p,ext)
-          | Ffi d -> (s,e,m,p,d::ext)
+          | Struct d -> (d::s,e,m,p)
+          | Enum d -> (s,d::e,m,p)
+          | Method d -> (s,e,d::m,p)
+          | Process d -> (s,e,m,d::p)
+         (*todo : 
+             
+          add string next to extern to specify lib 
+          merge FFi to Method with body = 'a (string) Either.t
+          *)
   in 
-  let (s,e,m,p,ext) = aux l in 
-    {name = name; structs = s; enums =e; methods=m; processes=p; ffi=List.flatten ext}
-
+  let (s,e,m,p) = aux l in 
+    {name = name; structs = s; enums =e; methods=List.flatten m; processes=p;}

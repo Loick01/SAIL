@@ -207,14 +207,15 @@ let translate (p : moduleSignature list) (t : statement) : Intermediate.statemen
 
 (* If the return type is non void, we add a parameter to hold the result *)
 let method_translator (prg :  moduleSignature list) (m : statement method_defn) : Intermediate.statement method_defn =
+  let open Monad.MonadEither.Make(struct type t = string option  end) in
   let params =       
     match m.m_proto.rtype with 
       None -> m.m_proto.params
-    | Some t -> m.m_proto.params@[(resvar, RefType(t,true))]
+    | Some t -> m.m_proto.params@[(resvar, (false,RefType(t,true)))]
   in
   {
     m_proto = {m.m_proto with params};
-    m_body = translate prg m.m_body
+    m_body = m.m_body >>| fun m -> translate prg m
   }
 
 let process_translator (prg : moduleSignature list)  (p : statement process_defn) : Intermediate.statement process_defn =
