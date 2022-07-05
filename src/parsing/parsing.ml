@@ -22,8 +22,8 @@ let fastParse filename : (string * AstParser.statement Common.TypesCommon.sailMo
   match Parser.sailModule read_token lexbuf with
   | v -> Result.ok (text,(v filename))
 
-  | exception SyntaxError (loc,msg) ->
-      Common.Error.print_errors text [loc,msg];
+  | exception SyntaxError (where,what) ->
+      Common.Error.print_errors text [{where;what;label="";why=None;hint=""}] ;
       exit 1
 
   | exception Parser.Error ->
@@ -56,17 +56,16 @@ let get text checkpoint i =
 
 
 
-let fail text buffer (checkpoint : _ I.checkpoint) =
+let fail text buffer (checkpoint : _ I.checkpoint) : 'a Common.Error.result  =
   let location = E.last buffer 
   and state_num = state checkpoint in
   try
   let message = ParserMessages.message state_num in
   let message = E.expand (get text checkpoint) message in
   Logs.debug (fun m -> m "reached error state %i "state_num);
-  Result.error [location, message]  
+  Common.Error.make location message
   with Not_found -> 
-    Result.error [location,Printf.sprintf "parser : No message found for state %i" state_num]
-  
+    Common.Error.make location (Fmt.str "parser : No message found for state %i" state_num)
   
 let slowParse filename text = 
  let lexbuf = L.init filename (Lexing.from_string text) in
@@ -77,9 +76,11 @@ let slowParse filename text =
 
 
 
-let parse_program filename : string * (AstParser.statement Common.TypesCommon.sailModule, Common.Error.error_type) Result.t =   
+let parse_program filename : string * (AstParser.statement Common.TypesCommon.sailModule, Common.Error.errors) Result.t =   
   match fastParse filename with
-  | Result.Ok (txt,sm) -> txt,Result.ok sm
+  | Result.Ok (txt,sm) -> 
+    Logs.err (fun m -> m "test");
+    txt,Result.ok sm
   | Result.Error txt -> txt,slowParse filename txt
 
   

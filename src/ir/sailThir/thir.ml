@@ -31,16 +31,16 @@ let degenerifyType (t: sailtype) (generics: (string * sailtype ) list) loc : sai
   | Char -> ok Char
   | String -> ok String
   | ArrayType (t,s) -> let+ t = aux t in ArrayType (t, s)
-  | CompoundType (_name, _tl)-> error [ loc ,"todo compoundtype"]
+  | CompoundType (_name, _tl)-> Error.make loc "todo compoundtype"
   | Box t -> let+ t = aux t in Box t
   | RefType (t,m) -> let+ t = aux t in RefType (t,m)
-  | GenericType t when generics = [] -> error [loc,Printf.sprintf "generic type %s present but empty generics list" t]
+  | GenericType t when generics = [] -> Error.make loc (Printf.sprintf "generic type %s present but empty generics list" t)
   | GenericType n -> 
     begin
       match List.assoc_opt n generics with
       | Some GenericType t -> GenericType t |> ok
       | Some t -> aux t
-      | None -> error [loc,Printf.sprintf "generic type %s not present in the generics list" n]
+      | None -> Error.make loc (Printf.sprintf "generic type %s not present in the generics list" n)
     end
   in
   aux t
@@ -70,22 +70,22 @@ struct
       if s = s' then
         let+ t,g = aux at mt g in ArrayType (t,s),g
       else
-        error [l,Printf.sprintf "array length mismatch : wants %i but %i provided" s' s]
-    | CompoundType _, CompoundType _ -> error [l, "todocompoundtype"]
-    | Box _at, Box _mt -> error [l,"todobox"]
-    | RefType (at,am), RefType (mt,mm) -> if am <> mm then error [l, "different mutability"] else aux at mt g
+        Error.make l (Printf.sprintf "array length mismatch : wants %i but %i provided" s' s)
+    | CompoundType _, CompoundType _ -> Error.make l "todocompoundtype"
+    | Box _at, Box _mt -> Error.make l "todobox"
+    | RefType (at,am), RefType (mt,mm) -> if am <> mm then Error.make l "different mutability" else aux at mt g
     | at,GenericType gt ->
      begin
         if List.mem gt generics then
           match List.assoc_opt gt g with
           | None -> ok (at,(gt,at)::g)
-          | Some t -> if t = at then ok (at,g) else error [l,"generic type mismatch"]
+          | Some t -> if t = at then ok (at,g) else Error.make l "generic type mismatch"
         else
-          error [l,Printf.sprintf "generic type %s not declared" gt]
+          Error.make l (Printf.sprintf "generic type %s not declared" gt)
       end
-    | _ -> error [l,Printf.sprintf "wants %s but %s provided" 
+    | _ -> Error.make l (Printf.sprintf "wants %s but %s provided"
            (string_of_sailtype (Some m_param))
-           (string_of_sailtype (Some arg))]
+           (string_of_sailtype (Some arg)))
     in aux arg m_param resolved_generics  
 
 
@@ -95,7 +95,10 @@ struct
       begin
         let nb_args = List.length args and nb_params = List.length f.args in
 
-          let* _ = if nb_args <> nb_params then error [loc, Printf.sprintf "unexpected number of arguments passed to %s : expected %i but got %i" name nb_params nb_args] else ok () in
+          let* _ = 
+            if nb_args <> nb_params then 
+              Error.make loc (Printf.sprintf "unexpected number of arguments passed to %s : expected %i but got %i" name nb_params nb_args) 
+            else ok () in
           let* resolved_generics = List.fold_left2 
           (
             fun g ca (_,a) ->
@@ -106,7 +109,7 @@ struct
           (ok [])
           args 
           f.args 
-        in
+        in  
         (* List.iter (fun (s,r) -> Printf.fprintf stdout "generic %s resolved to %s\n" s (string_of_sailtype (Some r)) ) resolved_generics; *)
         begin
           match f.ret with
@@ -115,8 +118,9 @@ struct
         end
       end
 
-    | None -> error [loc,"unknown method " ^ name]
-    | _ -> error [loc,"problem with env"]
+    | None -> Error.make loc (Fmt.str "unknown method %s" name)
+      ~hint:(fun fmt -> Format.pp_print_list fmt (Pass.TypeEnv.find_closest name env))
+    | _ -> Error.make loc "problem with env"
 
   let lower_expression (e : Hir.expression) (te: Pass.TypeEnv.t) (generics : string list): expression result = 
   let rec aux = function
@@ -125,7 +129,7 @@ struct
       begin
         match e with
         | AstHir.Ref _ as t -> AstHir.Deref((l,extract_exp_loc_ty t |> snd), e) |> ok
-        | _ -> error [l,"can't deref a non-reference!"]
+        | _ -> Error.make l "can't deref a non-reference!"
       end
 
     | AstHir.ArrayRead (l,array_exp,idx) -> let* array_exp = aux array_exp and* idx = aux idx in
@@ -134,10 +138,10 @@ struct
         | ArrayType (t,_) -> 
           let* _ = matchArgParam (extract_exp_loc_ty idx) Int generics [] in
           AstHir.ArrayRead((l,t),array_exp,idx) |> ok
-        | _ -> error [l,"not an array !"]
+        | _ -> Error.make l "not an array !"
       end
 
-    | AstHir.StructRead (l,_struct_exp,_field) -> error [l,"todo: struct read"]
+    | AstHir.StructRead (l,_struct_exp,_field) -> Error.make l "todo: struct read"
     | AstHir.Literal (l,li) -> let t = sailtype_of_literal li in AstHir.Literal((l,t),li) |> ok
     | AstHir.UnOp (l,op,e) -> let+ e = aux e in AstHir.UnOp ((l, extract_exp_loc_ty e |> snd),op,e)
     | AstHir.BinOp (l,op,le,re) ->  
@@ -153,22 +157,22 @@ struct
       let first_t = extract_exp_loc_ty first_t |> snd in
       let el,errors = partition_result (
         fun e -> let* t = aux e in
-        if extract_exp_loc_ty t |> snd = first_t then ok t else error [l,"mixed type array"]
+        if extract_exp_loc_ty t |> snd = first_t then ok t else Error.make l "mixed type array"
       ) el in 
       if errors = [] then
         let t = ArrayType (first_t, List.length el) in AstHir.ArrayStatic((l,t),el)  |> ok
       else
         Error errors
 
-    | AstHir.StructAlloc (l,_name,_fields) -> error [l, "todo: struct alloc"]
-    | AstHir.EnumAlloc (l,_name,_el) -> error [l, "todo: enum alloc"]
+    | AstHir.StructAlloc (l,_name,_fields) -> Error.make l "todo: struct alloc"
+    | AstHir.EnumAlloc (l,_name,_el) -> Error.make l "todo: enum alloc"
     | AstHir.MethodCall (l,name,args) -> 
       let args,errors = partition_result aux args in 
 
       if errors = [] then
         let* res = check_call name args te l in
         match res with
-        | None -> error [l,"trying to use the result of void method"]
+        | None -> Error.make l "trying to use the result of void method"
         | Some t -> AstHir.MethodCall((l, t), name, args) |> ok
       else
         Error errors
@@ -187,7 +191,7 @@ struct
             | (Some t,Some e) -> let* e in let tv = extract_exp_loc_ty e in let+ a = matchArgParam tv t decl.generics [] in fst a
             | (Some t, None) -> ok t
             | (None,Some t) -> let+ t in extract_exp_loc_ty t |> snd
-            | (None,None) -> error [l,"can't infere type with no expression"]
+            | (None,None) -> Error.make l "can't infere type with no expression"
             
           in 
           let* te' = Pass.TypeEnv.declare_var te id var_type l in 
@@ -239,15 +243,15 @@ struct
         else error errors
 
       | AstHir.Return(l, None) as r -> 
-        if decl.ret = None then ok (r,te) else  error [l,"void return"]
+        if decl.ret = None then ok (r,te) else  Error.make l "void return"
 
       | AstHir.Return(l, Some e) ->
         if decl.bt <> Pass.BMethod then 
-          error [l, Printf.sprintf "process %s : processes can't return non-void type" decl.name] 
+          Error.make l (Printf.sprintf "process %s : processes can't return non-void type" decl.name)
         else
           begin
           match decl.ret with 
-          | None -> error [l,"non-void return"] 
+          | None -> Error.make l "non-void return"
           | Some r ->
             let* e = lower_expression e te decl.generics in
             let+ _ = matchArgParam (extract_exp_loc_ty e) r decl.generics [] in
@@ -259,7 +263,7 @@ struct
         AstHir.Block(loc,res),te'
 
 
-      | s when decl.bt = Pass.BMethod -> error [extract_statements_loc s, Printf.sprintf "method %s : methods can't contain reactive statements" decl.name]
+      | s when decl.bt = Pass.BMethod -> Error.make (extract_statements_loc s) (Printf.sprintf "method %s : methods can't contain reactive statements" decl.name)
 
 
       | AstHir.Watching(loc, s, c) -> let+ res,_ = aux c te in AstHir.Watching(loc, s, res),te

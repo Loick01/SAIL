@@ -16,7 +16,10 @@ module type DeclEnvType = sig
   val empty : unit -> t
   val add_declaration : t -> string -> decl -> t
   val find_declaration : t -> decl_ty -> decl option
+
   val write_declarations : t -> string -> unit
+  
+  val find_closest : string -> t -> string list
 end
 
 
@@ -65,6 +68,13 @@ module DeclarationsEnv (D:Declarations) = struct
     M.iter (fun n _ -> Printf.fprintf stdout "method %s\n" n) decls.methods;
     M.iter (fun n _ -> Printf.fprintf stdout "struct %s\n" n) decls.structs;
     M.iter (fun n _ -> Printf.fprintf stdout "enum %s\n" n) decls.enums
+
+
+  let find_closest name decls : string list =
+    M.filter (fun n  _ -> Error.levenshtein_distance n name < 3) decls.methods
+    |> M.bindings
+    |> List.split
+    |> fst
 
 end
 
@@ -135,19 +145,21 @@ module VariableEnv (V:Variable) (D:DeclEnvType) = struct
 
   let get_function (_,g) name = D.find_declaration g name
     
+
+  let find_closest name (_,g) = D.find_closest name g
   let get_var e name loc = 
     let rec aux env = 
       let current,env = current_frame env in
       match M.find_opt name current with 
       | Some v -> Result.ok v
-      | None  when fst env = [] ->  Result.error [loc,Printf.sprintf "variable %s doesn't exist !" name]
+      | None  when fst env = [] -> Error.make loc (Fmt.str "%s" name)
       | _ -> aux env
       in aux e
 
   let declare_var e name tyval loc =
     let current,_env = current_frame e in
     match M.find_opt name current with 
-    | Some _ -> Result.error [loc,Printf.sprintf "variable %s already exists !" name]
+    | Some _ -> Error.make loc (Fmt.str "variable %s already exists !" name)
     | None -> 
       let upd_frame = M.add name tyval current in
       push_frame _env upd_frame |> Result.ok

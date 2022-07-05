@@ -156,7 +156,7 @@ let statementToIR (m:llvalue) (x: Hir.expression AstHir.statement) (generics: sa
       | (None,None) -> failwith "typechecker failed"
     in
     Logs.debug (fun m -> m "declared %s with type %s " name (string_of_sailtype (Some t))) ;
-    SailEnv.declare_var env name (t,v) Lexing.dummy_pos |> Result.get_ok
+    SailEnv.declare_var env name (t,v) dummy_pos |> Result.get_ok
   in
 
   let rec aux x env : SailEnv.t = 
@@ -282,7 +282,7 @@ let methodToIR (llc:llcontext) (llm:llmodule) (env:SailEnv.t) (name : string) (m
 
       let new_env,args = Array.fold_left_map (
         fun env tyvar -> 
-          let new_env = SailEnv.declare_var env (value_name (snd tyvar)) tyvar Lexing.dummy_pos |> Result.get_ok in 
+          let new_env = SailEnv.declare_var env (value_name (snd tyvar)) tyvar dummy_pos |> Result.get_ok in 
           (new_env, snd tyvar)
         ) env args 
 
