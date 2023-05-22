@@ -10,7 +10,7 @@ let saili (files: string list) (intermediate:bool) () =
   | f::r -> 
     begin
       match Parsing.parse_program f  with
-      | fcontent,(Ok(p),errors) ->
+      | fcontent,_,(Ok p,errors) ->
         Error.print_errors fcontent errors;
 
         let signatures =  [SailModule.signatureOfModule p; ExternalsInterfaces.exSig] in 
@@ -31,7 +31,7 @@ let saili (files: string list) (intermediate:bool) () =
         | [] -> `Ok ()
         | l ->  aux l
         end;
-      | fcontent,(Error e, errlist) -> Common.Error.print_errors fcontent @@ e::errlist; `Error (false, "evaluation aborted")
+      | fcontent,_,(Error e, errlist) -> Common.Error.print_errors fcontent @@ e::errlist; `Error (false, "evaluation aborted")
     end
   | [] -> `Ok ()
   

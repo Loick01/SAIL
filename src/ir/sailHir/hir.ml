@@ -22,9 +22,8 @@ struct
       
 
   let get_hint id env = 
-    match List.nth_opt (HIREnv.get_closest env id) 0 with
-    | None ->  ""
-    | Some id ->  Printf.sprintf "Did you mean %s ?" id
+    MonadOption.M.bind (List.nth_opt (HIREnv.get_closest env id) 0) (fun id -> Some (None,Printf.sprintf "Did you mean %s ?" id))
+
 
   let lower_expression (e : AstParser.expression) : expression ECSW.t = 
     let open MonadSyntax(ECSW) in
@@ -56,7 +55,7 @@ struct
         let+ m = mapMapM aux m in {info; exp=StructAlloc (id, m)}
       | EnumAlloc (id, el) ->
         let+ el = listMapM aux el in  {info;exp=EnumAlloc (id, el)}
-      | MethodCall ((l_id,id), el) ->
+      | MethodCall (mod_loc, (l_id,id), el) ->
           let* m = ECSW.get_method id in 
           match m with
           | Some (_proto_loc,proto) -> 
@@ -67,12 +66,14 @@ struct
               let x = "__f" ^ string_of_int n in
               let* el = listMapM aux el in
               let* () =  {info; stmt=DeclVar (false, x, Some rtype, None)} |> ECSW.write in
-              let+ () = {info; stmt=Invoke(Some x, (l_id,id), el)} |> ECSW.write in
+              let+ () = {info; stmt=Invoke(Some x, mod_loc, (l_id,id), el)} |> ECSW.write in
               {info;exp=Variable x}
                 
             | None -> ECSW.throw (Error.make info "methods in expressions should return a value")
             end
-          | _ -> let* env = ECSW.get_env in let hint = get_hint id env in ECSW.throw (Error.make l_id "unknown method" ~hint)
+          | _ -> let* env = ECSW.get_env in 
+                 let hint = get_hint id env in
+                 ECSW.throw (Error.make l_id "unknown method" ~hint)
       in aux e
 
   let lower_function (c:in_body Pass.function_type) (env:HIREnv.t) : out_body E.t = 
@@ -121,12 +122,9 @@ struct
     | Case (e, _cases) ->  let+ e,s = lower_expression e in
         buildSeqStmt s (Case (e, []))
 
-    | Invoke ((l_id,id) as lid, el) ->
-        let* m = ECS.get_method id and* env = ECS.get in
-        let* () = ECS.log_if (Option.is_none m) (let hint = get_hint id env in (Error.make l_id "unknown method" ~hint))
-        in
+    | Invoke (mod_loc, lid, el) ->
         let+ el,s = listMapM lower_expression el in
-        buildSeqStmt s (Invoke(None, lid,el))
+        buildSeqStmt s (Invoke(None, mod_loc, lid,el))
 
     | Return e -> 
         begin match e with 

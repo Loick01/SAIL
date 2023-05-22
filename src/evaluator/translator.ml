@@ -101,7 +101,7 @@ let removeCalls (p : SailModule.moduleSignature list) (e : expression) : Interme
     | EnumAlloc ((_,x),el) ->
         let* el = listMapM aux el in 
           return (Intermediate.EnumAlloc(x, el))
-    | MethodCall ((_,id), el) ->
+    | MethodCall (_, (_,id),  el) ->
       if (id = "box") then
         match el with
           [e] -> let* e = aux e in return (Intermediate.Box e)
@@ -171,7 +171,7 @@ let translate (p : SailModule.moduleSignature list) (t : statement) : Intermedia
           let (e,l) = removeCalls p e in 
             let pl = (List.map (fun (x,y) -> (x, aux y) ) pl) in
             seq_oflist (l @ [Intermediate.Case(e, pl)])
-      | Invoke((_,m), el) -> 
+      | Invoke(_, (_,m), el) -> 
         Logs.debug (fun m -> m "Here 0"); 
         let l = List.map (removeCalls p) el in 
         let l1 = List.map fst l in 
@@ -222,5 +222,5 @@ let process_translator (prg : SailModule.moduleSignature list)  (p : statement p
 let program_translate (prg : SailModule.moduleSignature list) (p : statement SailModule.t) : Intermediate.statement SailModule.t = 
   {
     p with methods = List.map (method_translator prg) p.methods;
-    processes = List.map (process_translator prg) p.processes
+    processes = List.map (process_translator prg) p.processes;
   }

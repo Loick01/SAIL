@@ -8,17 +8,18 @@ open IrThir
 open IrHir
 open IrMir
 open Compiler
+open TypesCommon
 (* open CompilerCommon *)
 open Codegen
 open CompilerEnv
 let error_handler err = "LLVM ERROR: " ^ err |> print_endline
 
 
-let moduleToIR (name:string) (m:Mir.Pass.out_body SailModule.t) (dump_decl:bool) : llmodule  = 
+let moduleToIR (m:Mir.Pass.out_body SailModule.t) (dump_decl:bool) : llmodule  = 
   let module FieldMap = Map.Make (String) in
 
   let llc = global_context () in
-  let llm = create_module llc (name ^ ".sl") in
+  let llm = create_module llc (m.name ^ ".sl") in
 
   let decls = get_declarations m llc llm in
 
@@ -61,13 +62,18 @@ let add_passes (pm : [`Module] PassManager.t) : unit  =
   Llvm_ipo.add_function_inlining pm
 
 
-let compile (llm:llmodule) (module_name : string) (target, machine) : int =
+let compile ?(is_lib = false) (llm:llmodule) (module_name : string) (target, machine) : int =
   let objfile = module_name ^ ".o" in 
   if Target.has_asm_backend target then
     begin
       TargetMachine.emit_to_file llm ObjectFile objfile machine;
-      Sys.command ( "clang " ^ objfile ^ " -o " ^ module_name) |> ignore;
-      "rm " ^ objfile |>  Sys.command
+      if not is_lib then 
+        begin
+        if (Option.is_none (lookup_function "main" llm)) then failwith ("no Main process found, can't compile as executable");
+        "clang " ^ objfile ^ " -o " ^ module_name |> Sys.command |> ignore;
+        "rm " ^ objfile |>  Sys.command
+        end
+      else 0
     end
   else
     failwith ("target " ^ target_triple  llm ^ "doesn't have an asm backend, can't generate object file!")
@@ -91,88 +97,151 @@ let execute (llm:llmodule) =
   Llvm_executionengine.dispose ee (* implicitely disposes the module *)
 
 
-let merge_modules sm1 sm2 =
-  let open SailModule in
-  let merge_envs (e1:DeclEnv.t) (e2:DeclEnv.t) : DeclEnv.t = 
+let _check_imports imports : unit Error.Logger.t = 
+  let open Monad.MonadSyntax(Error.Logger) in 
+  let open TypesCommon in 
+  List.iter (fun s -> print_newline () ; print_string s.mname ; print_newline ()) imports;
+  return ()
+
+
+let find_file_opt ?(maxdepth = 10) (f:string)  : string option = (* recursively find the file *)
+  let open Sys in 
+  let open Filename in
+  let rec aux dir depth = 
+    if depth > maxdepth then None else
+      let dirs,files = readdir dir |> Array.to_list |> List.map (concat dir) |> List.partition is_directory 
+      in
+      match List.find_opt (fun f' -> String.equal f (basename f')) files with
+      | Some f -> Some f
+      | None -> List.fold_left (
+          fun r d -> match r with 
+          | Some f -> Some f 
+          | None -> aux d (depth+1)
+        ) None dirs
+  in aux (getcwd ()) 0 
+
+
+let apply_passes = fun m ->
+  m
+  |> Hir.Pass.transform 
+  |> Thir.Pass.transform 
+  |> Mir.Pass.transform 
+  |> CompilerCommon.MainTransformPass.transform 
+
+
+  let merge_envs (e1:SailModule.DeclEnv.t) (e2:SailModule.DeclEnv.t) : SailModule.DeclEnv.t = 
     let merge =TypesCommon.FieldMap.union
     in
     {
-      methods = merge (fun _ _ _ -> failwith "declaration clash") e1.methods e2.methods;
-      processes = merge (fun _ _ _ -> failwith "declaration clash") e1.processes e2.processes;
+      methods = merge (fun m _ _ -> failwith @@ "declaration clash " ^ m) e1.methods e2.methods;
+      processes = merge (fun m _ _ -> failwith @@ "declaration clash "  ^ m ) e1.processes e2.processes;
       structs = merge  (fun _ _ _ -> failwith "declaration clash") e1.structs e2.structs;
       enums = merge  (fun _ _ _ -> failwith "declaration clash")  e1.enums e2.enums;
     }
-  in
-  let open SailModule in
-  let open Monad.MonadSyntax(Error.Logger) in
-  let+ sm1 and* sm2 in 
-  let name = sm2.name 
-  and declEnv = merge_envs sm1.declEnv sm2.declEnv
-  and methods = sm1.methods @ sm2.methods
-  and processes=sm1.processes @ sm2.processes
-  and builtins = sm1.builtins in 
- {name; declEnv; methods; processes;builtins}
+
+  let merge_modules sm1 sm2 =
+    let open SailModule in
+    let open Monad.MonadSyntax(Error.Logger) in
+    let name = sm2.name 
+    and declEnv = merge_envs sm1.declEnv sm2.declEnv
+    and methods = sm1.methods @ sm2.methods
+    and processes=sm1.processes @ sm2.processes
+    and builtins = sm1.builtins in 
+   {name; declEnv; methods; processes;builtins}
 
 
 let sailor (files: string list) (intermediate:bool) (jit:bool) (noopt:bool) (dump_decl:bool) () = 
+  let open Monad.MonadSyntax(Error.Logger) in
+  let open Monad.MonadFunctions(Error.Logger) in
+
   enable_pretty_stacktrace ();
   install_fatal_error_handler error_handler;
 
-  let rec aux = function
-  | f::r -> 
+  let process_mir sail_module fcontent is_lib : AstMir.mir_function SailModule.t Error.Logger.t =
+    let+ m = Error.Logger.iter_warnings (apply_passes sail_module) (Error.print_errors fcontent) in  
+    (* let mir_debug = m.name ^ "_mir.debug" |> open_out in *)
+    let mir_out = m.name ^ "_mir" |> open_out  in
+    Marshal.to_channel mir_out m [];
+    (* Format.fprintf (Format.formatter_of_out_channel mir_debug) "%a" Pp_mir.ppPrintModule m; *)
+    (* close_out mir_debug; *)
+    close_out mir_out;
+
+    let llm = moduleToIR m dump_decl in
+    let tm = init_llvm llm in
+
+    if not noopt then 
+      begin
+        let open PassManager in
+        let pm = create () in add_passes pm;
+        let res = run_module llm pm in
+        Logs.debug (fun m -> m "pass manager executed, module modified : %b" res);
+        dispose pm
+      end
+    ;
+
+    if intermediate then print_module (m.name ^ ".ll") llm;
+
+    if not (intermediate || jit) then
+      begin
+        let ret = compile llm m.name tm ~is_lib in
+        if ret <> 0 then
+          (Fmt.str "clang couldn't execute properly (error %i)" ret |> failwith);
+      end;
+    if jit then execute llm else dispose_module llm;
+    m
+  in
+
+  let rec process_file f (closed: (string*loc) list) ~is_lib = 
     let module_name = Filename.chop_extension (Filename.basename f) in
-    begin
-        let fcontent,sail_module = Parsing.parse_program f in
-        let sail_module = 
-          merge_modules (Parsing.parse_program "print_utils.sl" |> snd) sail_module (*  temporary *)
-          |> Hir.Pass.lower 
-          |> Thir.Pass.lower 
-          |> Mir.Pass.lower 
-          |> CompilerCommon.Pass.lower 
-        in
-        begin
+    let fcontent,imports,sail_module = Parsing.parse_program f in
+    Logs.debug (fun m -> m "compiling module '%s'" module_name);
+    let* m  = sail_module in 
 
-        match sail_module with
-        | Ok m,errors ->
+    (* for each import,  we check if a corresponding mir file exists.
+      - if it exists, we get its corresponding sail_module 
+      - if not, we look for a source file and compile it *)
 
-          Error.print_errors fcontent errors;
-
-          let mir_debug = module_name ^ "_mir" |> open_out in
-          Format.fprintf (Format.formatter_of_out_channel mir_debug) "%a" Pp_mir.ppPrintModule m;
-          close_out mir_debug;
-
-          let llm = moduleToIR module_name m dump_decl in
-          let tm = init_llvm llm in
-
-          if not noopt then 
+        let* imports = listMapM (
+        fun (i : import ) : AstMir.mir_function SailModule.t Error.Logger.t -> 
+          let* () = 
+            let import_loc = List.assoc_opt i.mname closed in
+            match import_loc with
+            | Some loc ->  Error.Logger.throw @@
+              if i.mname = module_name then 
+                Error.make i.loc "a module cannot import itself" 
+              else 
+                Error.make i.loc "dependency cycle !" 
+                ~hint:(Some (Some loc, "other import"))
+            | None -> return ()
+          in
+          match find_file_opt @@ i.mname ^ "_mir" with
+          | Some f -> 
+            let mir_in = open_in f in
+             return (Marshal.from_channel mir_in)
+          | None -> 
+            let source = i.mname ^ ".sl" in
             begin
-              let open PassManager in
-              let pm = create () in add_passes pm;
-              let res = run_module llm pm in
-              Logs.debug (fun m -> m "pass manager executed, module modified : %b" res);
-              dispose pm
+              match find_file_opt source with
+              | Some d -> process_file d ((module_name,i.loc)::closed) ~is_lib:true
+              | None ->  Error.Logger.throw @@ Error.make i.loc "import not found"
             end
-          ;
+        ) imports in 
+        let x = List.fold_left merge_modules SailModule.emptyModule imports in (* fixme *)
+        let declEnv = merge_envs m.declEnv x.declEnv in
+        SailModule.DeclEnv.print_declarations declEnv;
+        process_mir (return {m with declEnv}) fcontent is_lib
 
-          if intermediate then print_module (module_name ^ ".ll") llm;
 
-          if not (intermediate || jit) then
-            begin
-              let ret = compile llm module_name tm in
-              if ret <> 0 then
-                (Fmt.str "clang couldn't execute properly (error %i)" ret |> failwith);
-            end;
-
-          if jit then execute llm else dispose_module llm;
-
-          aux r
-        | Error e, errlist -> Error.print_errors fcontent @@ e::errlist; `Error(false, "compilation aborted")
-        end
-            end
-  | [] -> `Ok ()
-  
   in 
-  try aux files with
+
+  try 
+  match listIterM (fun f -> let+ _mir = process_file f [] ~is_lib:false  in ()) files with
+  | Ok _,_ -> `Ok ()
+  | Error e,errs -> 
+    Error.print_errors (open_in (fst e.where).pos_fname |> In_channel.input_all ) @@ e::errs;
+    `Error(false, "compilation aborted") 
+    
+  with
   | e -> `Error (false,Printexc.to_string e)
 
 let jit_arg =

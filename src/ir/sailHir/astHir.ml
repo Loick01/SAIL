@@ -47,7 +47,7 @@ type ('i,'e) statement = {info: 'i; stmt: ('i,'e) _statement} and ('i,'e) _state
   | While of 'e * ('i,'e) statement
   | Break
   | Case of 'e * (string * string list * ('i,'e) statement) list
-  | Invoke of string option * (loc * string) * 'e list
+  | Invoke of string option * string option * (loc * string) * 'e list
   | Return of 'e option
   | Run of (loc*string) * 'e list
   | Emit of string

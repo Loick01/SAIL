@@ -112,7 +112,15 @@ module MonadFunctions (M : Monad) = struct
     let open MonadOperator(M) in
     match l with 
       | [] -> pure []
-      | h::t -> (f h) >>= (fun h -> listMapM f t >>= fun t -> pure (h::t))  
+      | h::t -> (f h) >>= (fun h -> listMapM f t >>= fun t -> pure (h::t)) 
+      
+      
+  let rec listIterM (f : 'a -> unit M.t)  (l : 'a list) : unit M.t = 
+    let open M in 
+    let open MonadOperator(M) in
+      match l with 
+      | [] -> pure ()
+      | h::t ->  (f h) >>= fun () -> listIterM f t
 
   let rec foldLeftM (f : 'a -> 'b -> 'a M.t) (x : 'a) (l : 'b list) : 'a M.t = 
     let open M in

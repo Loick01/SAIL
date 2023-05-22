@@ -4,6 +4,7 @@ open Common
 open Lexer
 open Lexing
 open Error
+open TypesCommon
 module L = MenhirLib.LexerUtil
 module E = MenhirLib.ErrorReports
 
@@ -19,7 +20,7 @@ let print_error_position lexbuf =
 
 
 
-let fastParse filename : (string * AstParser.statement SailModule.t, string) Result.t =
+let fastParse filename : (string * (import list  * AstParser.statement SailModule.t) , string) Result.t =
   let text, lexbuf = L.read filename in
   match Parser.sailModule read_token lexbuf with
   | v -> Result.ok (text,(v filename))
@@ -82,11 +83,10 @@ let slowParse filename text =
 
 
 
-let parse_program filename : string * AstParser.statement SailModule.t Logger.t = 
-  let open Monad.MonadOperator(Logger) in
+let parse_program filename : string * import list * (AstParser.statement SailModule.t Logger.t) = 
   match fastParse filename with
-  | Result.Ok (txt,sm) -> txt,Logger.pure sm
-  | Result.Error txt -> txt,slowParse filename txt
+  | Result.Ok (txt,(i,sm)) -> txt,i,Logger.pure sm
+  | Result.Error txt -> txt,[],slowParse filename txt
 
   
   

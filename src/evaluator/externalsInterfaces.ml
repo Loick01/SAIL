@@ -12,5 +12,5 @@ let exSig = {
   declEnv = DeclEnv.empty;
   methods = [];
   processes = [];
-  builtins=[]
+  builtins=[];
 }

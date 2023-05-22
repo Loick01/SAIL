@@ -18,7 +18,7 @@ let degenerifyType (t: sailtype) (generics: sailtype dict) loc : sailtype ES.t =
   | Char -> return Char
   | String -> return String
   | ArrayType (t,s) -> let+ t = aux t in ArrayType (t, s)
-  | CompoundType (_name, _tl)-> ES.throw (Error.make loc "todo compoundtype")
+  | CompoundType (_,_name, _tl)-> ES.throw (Error.make loc "todo compoundtype")
   | Box t -> let+ t = aux t in Box t
   | RefType (t,m) -> let+ t = aux t in RefType (t,m)
   | GenericType t when generics = [] -> ES.throw @@ Error.make loc (Printf.sprintf "generic type %s present but empty generics list" t)
@@ -103,5 +103,5 @@ let check_call (name:string) (args: expression list) loc : sailtype option ES.t 
       end
     end
 
-  | None,None -> failwith "problem with hir"
+  | None,None -> failwith @@ "Method '" ^ name ^ "' not found, HIR broken ? "
 

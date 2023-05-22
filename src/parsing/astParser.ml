@@ -36,7 +36,7 @@ type expression = loc * expression_ and expression_ =
   | ArrayStatic of expression list
   | StructAlloc of (loc * string) * expression FieldMap.t
   | EnumAlloc of (loc * string) * expression list 
-  | MethodCall of (loc * string) * expression list
+  | MethodCall of string option *  (loc * string) * expression list
 
   
   type pattern =
@@ -54,7 +54,7 @@ type statement = loc * statement_ and statement_ =
   | While of expression * statement
   | Break of unit
   | Case of expression * (pattern * statement) list
-  | Invoke of  (loc*string) * expression list
+  | Invoke of  string option *  (loc*string) * expression list
   | Return of expression option
   | Run of (loc*string) * expression list
   | Loop of statement
@@ -64,7 +64,7 @@ type statement = loc * statement_ and statement_ =
   | Watching of string * statement
   | Block of statement
 
-
+ 
 type defn =
   | Struct of struct_defn
   | Enum of enum_defn
@@ -73,7 +73,7 @@ type defn =
   
 
 
-let mk_program name l : statement SailModule.t =
+let mk_program name (imports: import list)  l : import list * (statement SailModule.t) =
   let open SailModule in
   let rec aux = function
     |  [] -> (DeclEnv.empty,[],[])
@@ -116,5 +116,5 @@ let mk_program name l : statement SailModule.t =
   in 
   let (declEnv,methods,processes) = aux l in 
   let builtins = Builtins.get_builtins () in
-  {name;declEnv;methods;processes;builtins}
+  imports,{name; declEnv;methods;processes;builtins}
 

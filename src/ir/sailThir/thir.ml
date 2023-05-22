@@ -156,10 +156,10 @@ struct
         buildStmt loc (Case (e, []))
 
 
-      | Invoke (var, id, el) -> (* todo: handle var *)
+      | Invoke (var, mod_loc, id, el) -> (* todo: handle var *)
         let* el = listMapM (lower_rexp decl.generics) el in 
         let+ _ = check_call (snd id) el loc in 
-        buildStmt loc (Invoke(var, id,el))
+        buildStmt loc (Invoke(var, mod_loc, id,el))
 
       | Return None as r -> 
         if decl.ret = None then return (buildStmt loc r) else 

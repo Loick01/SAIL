@@ -18,7 +18,7 @@ let getLLVMType (t : sailtype) (llc: llcontext) (_llm: llmodule) : lltype =
   | Char -> i8_type llc
   | String -> i8_type llc |> pointer_type
   | ArrayType (t,s) -> array_type (aux t) s
-  | CompoundType (_, [t])-> aux t
+  | CompoundType (_, _, [t])-> aux t
   | CompoundType _-> failwith "compound type unimplemented"
   | Box t | RefType (t,_) -> aux t |> pointer_type
   | GenericType _ -> failwith "there should be no generic type, was degenerifyType used ? " 
@@ -48,7 +48,7 @@ module E = Common.Error
 open Monad.MonadSyntax(E.Logger)
 
 
-  module Pass = Pass.Make( struct
+module MainTransformPass = Pass.Make( struct
   let name = "Main Process to Method"
   type in_body = IrMir.Mir.Pass.out_body
   type out_body  = in_body
@@ -59,9 +59,11 @@ open Monad.MonadSyntax(E.Logger)
       let m_proto = {pos=p.p_pos; name="main"; generics = p.p_generics; params = fst p.p_interface; variadic=false; rtype=None} 
       and m_body = Either.right p.p_body in
       E.Logger.pure {m_proto; m_body}
-    | None -> let+ () = E.Logger.throw @@ E.make dummy_pos "no Main process found" in {m_body=Either.Left None; m_proto={pos=dummy_pos; name=""; generics = []; params = []; variadic=false; rtype=None}}
+    | None -> 
+      (* let+ () =  E.Logger.throw @@ E.make dummy_pos "no Main process found" in *)
+      return {m_body=Either.Left None; m_proto={pos=dummy_pos; name=""; generics = []; params = []; variadic=false; rtype=None}}
 
-  let lower (m : in_body SailModule.t)  : out_body SailModule.t E.Logger.t =
+  let transform (m : in_body SailModule.t)  : out_body SailModule.t E.Logger.t =
   let+ main = method_of_main_process m.processes in
   { m with  methods = main :: m.methods } 
 end

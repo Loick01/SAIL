@@ -145,7 +145,8 @@ struct
         let+ cfg = singleBlock bb in
         ([],cfg)
         
-      | Invoke (target, id, el) -> 
+      | Invoke (target, _mod_loc, id, el) -> 
+        (* todo mod_loc  *)
         let* el' = listMapM rexpr el in
         let+ invoke = buildInvoke loc id target el' in
         ([], invoke)

@@ -70,6 +70,7 @@ rule read_token = parse
   | "," { COMMA }
   | "." { DOT }
   | ":" { COLON }
+  | "::" { DCOLON }
   | ";" { SEMICOLON }
   | "=" { ASSIGN }
   | "+" { PLUS }
@@ -94,6 +95,7 @@ rule read_token = parse
   | "process" { PROCESS }
   | "method" { METHOD }
   | "extern" { EXTERN }
+  | "import" { IMPORT }
   | "..." { VARARGS }
   | "true" { TRUE }
   | "false" { FALSE }

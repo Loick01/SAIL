@@ -34,8 +34,9 @@
 %token <char> CHAR
 
 %token LPAREN "(" RPAREN ")" LBRACE "{" RBRACE "}" LSQBRACE "[" RSQBRACE "]" LANGLE "<" RANGLE ">"
-%token COMMA "," COLON ":" SEMICOLON ";" DOT "."
+%token COMMA "," COLON ":" DCOLON "::" SEMICOLON ";" DOT "."
 %token ASSIGN "="
+%token IMPORT
 %token EXTERN
 %token VARARGS
 %token METHOD PROCESS STRUCT ENUM 
@@ -63,7 +64,7 @@
 
 %nonassoc ELSE
 
-%start <string -> statement SailModule.t> sailModule
+%start <string  -> import list * statement SailModule.t> sailModule
 
 %type <expression> expression 
 %type <sailtype> sailtype
@@ -74,9 +75,11 @@
 %% 
 
 
-let sailModule := l = defn* ; EOF ; {fun x -> mk_program x l}
+let sailModule := i = import* ; l = defn* ; EOF ; {fun name -> mk_program name i l}
 
 let brace_del_sep_list(sep,x) == delimited("{", separated_list(sep, x), "}") 
+
+let import := IMPORT ; mname = ID ; {{loc=$loc;mname}}
 
 let defn :=
 | STRUCT ; name = ID ; g = generic ;  f = brace_del_sep_list(",", id_colon(sailtype)) ;
@@ -95,10 +98,12 @@ fun_sig : METHOD name=ID generics=generic LPAREN params=separated_list(COMMA, mu
         { {pos=$loc;name; generics; params; variadic; rtype=rtype } }
 
 
-
 is_variadic:
 | {false}
 | VARARGS {true}
+
+let module_loc :=  ~ = ID; DCOLON ; <>
+
 
 let enum_elt :=
 | id = UID ; {(id, [])}
@@ -145,7 +150,8 @@ let expression :=
         }
     | id = located(UID) ; {EnumAlloc(id, [])}
     | ~ = located(UID) ; ~ = delimited ("(", separated_list(",", expression), ")") ; <EnumAlloc>
-    | ~ = located(ID) ; ~ = delimited ("(", separated_list (",", expression), ")") ; <MethodCall>
+    | m = module_loc ; id = located(ID) ; args = delimited ("(", separated_list (",", expression), ")") ; {MethodCall(Some m, id, args)}
+    | id = located(ID) ; args = delimited ("(", separated_list (",", expression), ")") ; {MethodCall(None, id, args)}
 )
 
 
@@ -199,7 +205,8 @@ let single_statement :=
     | IF ; e = parenthesized_exp ; s1 = single_statement ; ELSE ; s2 = single_statement ; {If(e, s1, Some s2)}
     | WHILE ; ~ = parenthesized_exp ; ~ = single_statement ; <While>
     | CASE ; ~ = parenthesized_exp ; ~ = brace_del_sep_list(",", case) ; <Case>
-    | ~ = located(ID) ; ~ = delimited("(", separated_list(",", expression), ")") ; <Invoke>
+    | m = module_loc ; l = located(ID) ; args = delimited("(", separated_list(",", expression), ")") ; {Invoke ((Some m), l, args)}
+    | l = located(ID) ; args = delimited("(", separated_list(",", expression), ")") ; {Invoke (None, l, args)}
     | RETURN ; ~ = expression? ; <Return>
     | ~ = located(UID) ; ~ = delimited("(", separated_list(",", expression ), ")") ; <Run>
     | EMIT ; ~ = ID ; <Emit>
@@ -252,7 +259,8 @@ let sailtype :=
 | TYPE_CHAR ; {Char}
 | TYPE_STRING ; {String}
 | ARRAY ; "<" ; ~ = sailtype ; ";" ; ~ = INT ; ">" ; <ArrayType>
-| ~ = ID ; ~ = instance ; <CompoundType>
+| mloc =  module_loc ; id = ID ; i = instance ; {CompoundType (Some mloc, id, i)}
+| id = ID ; i = instance ; {CompoundType(None, id, i)}
 | ~ = UID ; <GenericType>
 | REF ; b = mut ; t = sailtype ; {RefType(t,b)}
 

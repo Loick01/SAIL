@@ -34,7 +34,7 @@ type sailtype =
   | Char 
   | String
   | ArrayType of sailtype * int
-  | CompoundType of string * sailtype list
+  | CompoundType of string option * string * sailtype list
   | Box of sailtype
   | RefType of sailtype * bool
   | GenericType of string
@@ -63,7 +63,7 @@ let rec string_of_sailtype (t : sailtype option) : string =
   | Some Char -> "char"
   | Some String -> "string"
   | Some ArrayType (t,s) -> sprintf "array<%s;%d>" (string_of_sailtype (Some t)) s
-  | Some CompoundType (x, _tl) -> sprintf "%s<todo>" x
+  | Some CompoundType (_, x, _ ) -> sprintf "%s<todo>" x
   | Some Box(t) -> sprintf "ref<%s>" (string_of_sailtype (Some t))
   | Some RefType (t,b) -> 
       if b then sprintf "&mut %s" (string_of_sailtype (Some t))
@@ -142,4 +142,10 @@ type function_proto =
   args : param list;
   generics : string list;
   variadic : bool;
+}
+
+type import =
+{
+  loc : loc;
+  mname : string;
 }

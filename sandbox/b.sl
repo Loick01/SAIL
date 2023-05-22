@@ -1,0 +1,5 @@
+import c
+
+method hello() {
+
+}

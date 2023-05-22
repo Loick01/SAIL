@@ -7,38 +7,93 @@ open MonadSyntax(Logger)
 open MonadOperator(Logger)
 
 
-module type ModulePass = sig
+module type Pass = sig
   val name : string
+  type input
+  type output
+
+  val transform : input -> output
+end
+
+module type ModulePass = sig
   type in_body
   type out_body  
 
-  val lower : in_body SailModule.t -> out_body SailModule.t Logger.t
+  include Pass with type input := in_body SailModule.t and type output := out_body SailModule.t Logger.t
 end
-
 
 module type S = sig
-  val name : string
   type in_body
   type out_body
+  include Pass with type input := in_body SailModule.t Logger.t and type output := out_body SailModule.t Logger.t
+end
 
-  val lower : in_body SailModule.t Logger.t -> out_body SailModule.t Logger.t
+
+module type AnalysisOutPass = sig
+  type body
+  type out_anl
+
+  include Pass with type input := body SailModule.t and type output := out_anl Logger.t
+end
+
+module type SOut = sig
+  type body
+  type out_anl
+  include Pass with type input := body SailModule.t Logger.t and type output := (out_anl * body SailModule.t) Logger.t
 end
 
 
 
-module Make (T: ModulePass) : S with type in_body = T.in_body and type out_body = T.out_body = 
+module type AnalysisInPass = sig
+  type body
+  type in_anl
+
+  include Pass with type input = in_anl * body SailModule.t and type output := body SailModule.t Logger.t
+end
+
+module type SIn = sig
+  type body
+  type in_anl
+
+  include Pass with type input := (in_anl * body SailModule.t) Logger.t and type output := body SailModule.t Logger.t
+end
+
+
+
+
+
+
+
+
+module Make (T: ModulePass) : S with type in_body := T.in_body and type out_body := T.out_body = 
 struct
   let name = T.name
-  type in_body = T.in_body
-  type out_body = T.out_body
       
-
-  let lower (m: T.in_body SailModule.t Logger.t) : T.out_body SailModule.t Logger.t = 
+  let transform (m: T.in_body SailModule.t Logger.t) : T.out_body SailModule.t Logger.t = 
     let* m = m |> Logger.fail in 
     Logs.info (fun m -> m "Lowering to '%s'" name);
-    T.lower m 
+    T.transform m 
 end
 
+module MakeAnlIn (T: AnalysisInPass) : SIn with type body := T.body and type in_anl := T.in_anl = 
+struct
+  let name = T.name
+  let transform (m: (T.in_anl * T.body SailModule.t) Logger.t) : T.body SailModule.t Logger.t = 
+    let* m = m |> Logger.fail in 
+    Logs.info (fun m -> m "Lowering using analysis to '%s'" name);
+    T.transform m
+end
+
+module MakeAnlOut (T: AnalysisOutPass) : SOut with type body := T.body and type out_anl := T.out_anl = 
+struct
+  let name = T.name
+
+  let transform (m: T.body SailModule.t Logger.t) : (T.out_anl * T.body SailModule.t) Logger.t = 
+    let* m = m |> Logger.fail in 
+    Logs.info (fun m -> m "Analysis : '%s'" name);
+    let+ out = T.transform m in
+    out,m
+end
 
 
 type body_type = BMethod | BProcess
@@ -95,7 +150,7 @@ let lower_process (p: T.in_body process_defn) (decls : SailModule.DeclEnv.t)  =
   { p with p_body}
 
 
-let lower (m :T.in_body SailModule.t Logger.t)  : T.out_body SailModule.t Logger.t =
+let transform (m :T.in_body SailModule.t Logger.t)  : T.out_body SailModule.t Logger.t =
   let* m in
   Logs.info (fun m -> m "Lowering to '%s'" name);
   (
