@@ -1,0 +1,7 @@
+
+Pour compiler :
+gcc -c FFI_SDL2.c
+dune exec sailor -- ./main.sl
+
+Jeu 1 :
+Appuyer sur la barre d'espace lorsque la barre noire est dans la zone bleue
