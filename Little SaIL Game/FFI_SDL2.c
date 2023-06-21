@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-#include <time.h>
 
 int initSDL2(){
 	return SDL_Init(SDL_INIT_VIDEO);
@@ -62,10 +61,6 @@ int destroyTexture(SDL_Texture *t){
 int renderCopy(SDL_Renderer* r, SDL_Texture* t, SDL_Rect* rect){
 	SDL_RenderCopy(r, t, NULL, rect);
 	return 1;
-}
-
-char* buildString(int score,int time){ //  ---------------- Ne pas garder cette fonction, elle est spécialisé pour le jeu 1 ----------------
-	return NULL; // A faire
 }
 
 SDL_Window* createWindow(const char* name,int width, int height){
@@ -158,30 +153,6 @@ int getTypeEvent(SDL_Event* ev){
 	return (*ev).type;
 }
 
-int generateRandom(int min, int max){
-	return min + (rand() % (max-min+1));
-}
-
-int* createIntValue(int val){
-	int * i = malloc(sizeof(int));
-	*i = val;
-	return i;
-}
-
-int getIntValue(int* p){
-	return *p;
-}
-
-int setIntValue(int* p, int val){
-	*p = val;
-	return 1;
-}
-
-int setAleatoire(){
-	srand(time(NULL));
-	return 1;
-}
-
 int deleteRect(SDL_Rect* r){
 	free(r);
 	return 1;
@@ -189,11 +160,6 @@ int deleteRect(SDL_Rect* r){
 
 int deleteEvent(SDL_Event* ev){
 	free(ev);
-	return 1;
-}
-
-int deleteIntPtr(int* i){
-	free(i);
 	return 1;
 }
 
