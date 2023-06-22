@@ -65,6 +65,9 @@ extern "FFI_SDL2.o SDL2 SDL2_ttf" {
 	method getTypeEvent(ev : sdlevent) : sdleventcode;
 	method getScancodeEvent(ev : sdlevent) : sdleventcode;
 	
+	method getMousePosition(x : ptr_int, y : ptr_int) : int;
+	
+	method rectIntersection(r1 : sdlrect, r2 : sdlrect) : int;
 	
 	method deleteRect(r : sdlrect) : int;
 	method deleteEvent(ev : sdlevent) : int;

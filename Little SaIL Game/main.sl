@@ -36,7 +36,7 @@ method playGame(r : renderer,ev : sdlevent, red_x : int, red_width : int, player
 		}
 		if(getTypeEvent(ev) == sdlkeydown and getIntValue(missRed) == 0){
 			if (getScancodeEvent(ev)== sdlspace_scancode){
-				if (getIntValue(player_x) >= red_x and red_x + red_width >= getIntValue(player_x) 
+				if (getIntValue(player_x) >= red_x and red_x + red_width >= getIntValue(player_x)           // Vérification sans la fonction SDL_HasIntersection()
             		or
             	(getIntValue(player_x) + 20 >= red_x and red_x + red_width >= getIntValue(player_x) + 20)){
             		setIntValue(score,getIntValue(score)+1);

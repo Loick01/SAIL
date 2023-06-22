@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 int generateRandom(int min, int max){
 	return min + (rand() % (max-min+1));
@@ -41,3 +42,17 @@ char* buildString(int time, int score){	//  ---------------- Ne pas garder cette
 	sprintf(c, "Temps restant : %d       Score : %d",time/1000,score);
 	return c;
 }
+
+int square(int v){
+	return v*v;
+}
+
+int squareroot(int v){
+	return (int)sqrt((double)v);
+}
+
+int maxInt(int v1, int v2){
+	return (v1 >= v2 ? v1 : v2);
+}
+
+

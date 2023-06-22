@@ -153,6 +153,18 @@ int getTypeEvent(SDL_Event* ev){
 	return (*ev).type;
 }
 
+int getMousePosition(int* x, int* y){
+	SDL_GetMouseState(x,y);
+	return 1;
+}
+
+int rectIntersection(SDL_Rect* r1, SDL_Rect* r2){
+	if (SDL_HasIntersection(r1,r2)){
+		return 1;
+	}
+	return 0;
+}
+
 int deleteRect(SDL_Rect* r){
 	free(r);
 	return 1;
