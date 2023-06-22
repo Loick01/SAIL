@@ -5,7 +5,13 @@ import ffi_c_utils
 method printOnScreen(r : renderer, temps : int, score : int) : int{
 	var font : sdlfont = openFont("roboto-bold.ttf", 30); // Déplacer toutes ces valeurs (pour ne pas avoir à les créer à chaque frame)
 	var color : sdlcolor = createColor(255,255,255,255);
-	var text : string = buildString(temps,score); //  Dans la ffi, cette fonction est spécialisée pour le jeu 1, donc ne pas la garder
+	
+	var tempsValue : string = stringOfInt(temps/1000);
+	var scoreValue : string = stringOfInt(score);
+	
+	var stringTemps : string = stringConcat("Temps restant : ",tempsValue); // stringConcat sera à revoir dans la FFI
+	var stringScore : string = stringConcat("        Score : ",scoreValue);
+	var text : string = stringConcat(stringTemps,stringScore);
 	
 	var widthText : ptr_int = createIntValue(0); // 0 par défaut, à voir si on crée une autre fonction sans paramètre
 	var heightText : ptr_int = createIntValue(0);
@@ -23,7 +29,12 @@ method printOnScreen(r : renderer, temps : int, score : int) : int{
 	
 	deleteIntPtr(widthText);
 	deleteIntPtr(heightText);
+	
 	deleteCharPtr(text);
+	deleteCharPtr(stringScore);
+	deleteCharPtr(stringTemps);
+	deleteCharPtr(scoreValue);
+	deleteCharPtr(tempsValue);
 	
 	return 1;
 }
@@ -87,24 +98,7 @@ method playGame(r : renderer,ev : sdlevent, red_x : int, red_width : int, player
 	return 1;
 }
 
-method jeu1(){
-	setAleatoire();
-	
-	if (initSDL2() != 0){
-		print_string("Erreur initialisation SDL2\n");
-	}
-	var w : window = createWindow("My SaIL window",800,600);
-	if (vWindow(w) == 1){
-		print_string("Erreur création fenêtre\n");
-	}
-	
-	initTTF(); // Tester si l'initialisation a réussi (renvoie un int)
-	
-	var r : renderer = createRenderer(w);
-	if (vRenderer(r) == 1){
-		print_string("Erreur création renderer\n");
-	}
-    
+method jeu1(r : renderer){
 	var timeRefresh : int = 20; //(ms entre 2 refresh)
 	var lengthGame : int = 15000; // (temps d'une partie en ms)
 	var ev : sdlevent = createEvent();
@@ -150,14 +144,7 @@ method jeu1(){
 	deleteIntPtr(player_x);
 	deleteIntPtr(direction);
 	deleteIntPtr(score);
-	deleteIntPtr(missRed);
-	deleteRenderer(r); // Attention : Toujours supprimer le renderer avant la window
-	deleteWindow(w);
-	
-	quitTTF();
-	quitSDL2();
-	
-	
+	deleteIntPtr(missRed);	
 }
 
 

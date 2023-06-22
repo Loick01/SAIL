@@ -2,7 +2,38 @@ import print_utils
 import ffi_sdl2
 import ffi_c_utils
 
-method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : ptr_int, mouse_y : ptr_int, center_x : int, center_y : int,square_x : ptr_int,square_y : ptr_int,radius : int, sw : int, sh : int,rect_x : ptr_int,rect_y : ptr_int, random : int) : int{
+
+
+method printOnScreen(r : renderer, score : int) : int{
+	var font : sdlfont = openFont("roboto-bold.ttf", 30); // Déplacer toutes ces valeurs (pour ne pas avoir à les créer à chaque frame)
+	var color : sdlcolor = createColor(255,255,255,255);
+	
+	var scoreValue : string = stringOfInt(score);
+	var text : string = stringConcat("Score : ",scoreValue); // stringConcat sera à revoir dans la FFI
+	
+	var widthText : ptr_int = createIntValue(0); // 0 par défaut, à voir si on crée une autre fonction sans paramètre
+	var heightText : ptr_int = createIntValue(0);
+	getSizeText(font,text,widthText,heightText);
+	var textRect : sdlrect = createRect(20,600 - getIntValue(heightText) - 10, getIntValue(widthText), getIntValue(heightText));
+	
+	var surface : sdlsurface = renderTextSolid(font, text, color);
+	var texture : sdltexture = createTextureFromSurface(r,surface);
+	
+	renderCopy(r, texture, textRect);
+	
+	destroyTexture(texture);
+	freeSurface(surface);
+	closeFont(font);
+	
+	deleteIntPtr(widthText);
+	deleteIntPtr(heightText);
+	deleteCharPtr(text);
+	deleteCharPtr(scoreValue);
+	
+	return 1;
+}
+
+method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : ptr_int, mouse_y : ptr_int, center_x : int, center_y : int,square_x : ptr_int,square_y : ptr_int,radius : int, sw : int, sh : int,rect_x : ptr_int,rect_y : ptr_int, random : int,score : int) : int{
 	if (isEvent(ev) == 1){
 		if(getTypeEvent(ev) == sdlquit){
 			return 0;
@@ -11,7 +42,6 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 	
 	setColor(r, 25, 144, 38, 255);
 	setBackgroundColor(r);
-			
 			
 	// Calcul de la nouvelle position du joueur en fonction de la position de la souris
 	getMousePosition(mouse_x,mouse_y);
@@ -30,105 +60,62 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 		setIntValue(square_y, center_y + dy_prime);
 	}
 			
-	var player : sdlrect = createRect(getIntValue(square_x), getIntValue(square_y), 50, 50);
+	var player : sdlrect = createRect(getIntValue(square_x) - 25, getIntValue(square_y) - 25, 50, 50); // 50 est la taille du carrée, et 25 pour la moitié du carrée
 	setColor(r,255,255,255,255);
 	drawRect(r, player);
 	
-	/* Apparemment il y a un problème avec les tableaux dont les éléments sont de types externes
 	var mut tabRect : array<sdlrect;3>;
-	setColor(r,230,45,69,255);
+	setColor(r,13, 6, 69,255);
 	var n : int = 0;
 	var i : int = 0;
 	var rx : int = getIntValue(rect_x);
 	var ry : int = getIntValue(rect_y);
 	while (i<2){
 		var rct1 : sdlrect = createRect(rx, ry + i*(sw-sh), sw, sh);
-		drawRect(r, rct1);
 		tabRect[n] = rct1;
-		n = n + 1;
+		
+		if (random == n){
+			deleteRect(rct1);
+			random = -1; // Pour s'assurer que la condition soit fausse
+		}else{
+			drawRect(r, rct1);
+			n = n + 1;
+		}
 		
 		var rct2 : sdlrect = createRect(rx + i*(sw-sh), ry, sh, sw);
-		drawRect(r, rct2);
 		tabRect[n] = rct2;
-		n = n + 1;
+		
+		if (random == n){
+			deleteRect(rct2);
+			random = -1;
+		}else{
+			drawRect(r, rct2);
+			n = n + 1;
+		}
 		
 		i = i + 1;
 	}
-	*/
 	
-	setColor(r,13, 6, 69,255);
-	var rx : int = getIntValue(rect_x);
-	var ry : int = getIntValue(rect_y);
-	
-	
-	// Pas mal de modification ici à faire si les structs sont disponibles
-	
-	var rct1 : sdlrect = createRect(rx, ry, sw, sh);              // Plus tard, on en créera que 3 des 4, et on en deleteRect() que 3
-	var rct2 : sdlrect = createRect(rx, ry + (sw-sh), sw, sh);
-	var rct3 : sdlrect = createRect(rx, ry, sh, sw);
-	var rct4 : sdlrect = createRect(rx + (sw-sh), ry, sh, sw);
-	
-	if (random != 0){
-		drawRect(r, rct1);
-	}
-	if (random != 1){
-		drawRect(r, rct2);
-	}
-	if (random != 2){
-		drawRect(r, rct3);
-	}
-	if (random != 3){
-		drawRect(r, rct4);
-	}
-	
-	if (rectIntersection(player,rct1) == 1 and random != 0){
-		return 0;
-	}
-	if (rectIntersection(player,rct2) == 1 and random != 1){
-		return 0;
-	}
-	if (rectIntersection(player,rct3) == 1 and random != 2){
-		return 0;
-	}
-	if (rectIntersection(player,rct4) == 1 and random != 3){
-		return 0;
-	}
-	
-	
-	deleteRect(rct1);
-	deleteRect(rct2);
-	deleteRect(rct3);
-	deleteRect(rct4);
-	
+	i = 0;
+	while (i < 3){
+		if (rectIntersection(player,tabRect[i]) == 1){
+			return 0;
+		}else{
+			deleteRect(tabRect[i]);
+		}
+		i = i + 1;
+	}	
 	deleteRect(player);
 	
-	
+	printOnScreen(r, score); // Affiche sur la fenêtre le score et le temps restant
 	setIntValue(rect_x,getIntValue(rect_x)+3); // On le bouge de la moitié de ce qu'on le réduit (6/2 = 3)
 	setIntValue(rect_y,getIntValue(rect_y)+3);
 	return 1;
 }				
 			
-method jeu2(){
-	setAleatoire();
-	
+method jeu2(r : renderer){   
 	var window_width : int = 800;
-	var window_height : int = 600;
-	
-	if (initSDL2() != 0){
-		print_string("Erreur initialisation SDL2\n");
-	}
-	var w : window = createWindow("My SaIL window",window_width,window_height);
-	if (vWindow(w) == 1){
-		print_string("Erreur création fenêtre\n");
-	}
-	
-	initTTF(); // Tester si l'initialisation a réussi (renvoie un int)
-	
-	var r : renderer = createRenderer(w);
-	if (vRenderer(r) == 1){
-		print_string("Erreur création renderer\n");
-	}
-    
+	var window_height : int = 600; 
 	var timeRefresh : int = 20; //(ms entre 2 refresh)
 	var ev : sdlevent = createEvent();
 	var sdlquit : sdleventcode = getSDLQUIT();	
@@ -157,7 +144,7 @@ method jeu2(){
 		setIntValue(rect_x,0);
 		setIntValue(rect_y,(window_width-window_height) / -2); // On suppose que la fenetre est plus longue que haute, donc le carré déborde en haut et en bas au départ
 		while(sw > sh){
-			play = playGame2(r,ev,sdlquit,mouse_x,mouse_y,center_x, center_y,square_x,square_y,radius,sw, sh,rect_x,rect_y,random);
+			play = playGame2(r,ev,sdlquit,mouse_x,mouse_y,center_x, center_y,square_x,square_y,radius,sw, sh,rect_x,rect_y,random,score);
 			sw = sw - 6;
 			refresh(r);
 			delay(timeRefresh);
@@ -175,18 +162,10 @@ method jeu2(){
 	
 	deleteEvent(ev);
 	
-	deleteRenderer(r); // Attention : Toujours supprimer le renderer avant la window
-	deleteWindow(w);
-	
 	deleteIntPtr(mouse_x);
 	deleteIntPtr(mouse_y);
 	deleteIntPtr(square_x);
 	deleteIntPtr(square_y);
 	deleteIntPtr(rect_x);
 	deleteIntPtr(rect_y);
-	
-	quitTTF();
-	quitSDL2();
-	
-	
 }

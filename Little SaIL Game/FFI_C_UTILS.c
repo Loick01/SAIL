@@ -7,9 +7,8 @@ int generateRandom(int min, int max){
 	return min + (rand() % (max-min+1));
 }
 
-int setAleatoire(){
+void setAleatoire(){
 	srand(time(NULL));
-	return 1;
 }
 
 int* createIntValue(int val){
@@ -22,25 +21,38 @@ int getIntValue(int* p){
 	return *p;
 }
 
-int setIntValue(int* p, int val){
+void setIntValue(int* p, int val){
 	*p = val;
-	return 1;
 }
 
-int deleteIntPtr(int* i){
-	free(i);
-	return 1;
-}
-
-int deleteCharPtr(char* c){
-	free(c);
-	return 1;
-}
-
-char* buildString(int time, int score){	//  ---------------- Ne pas garder cette fonction, elle est spécialisé pour le jeu 1 ----------------	
-	char* c = malloc(sizeof(char)*50);
-	sprintf(c, "Temps restant : %d       Score : %d",time/1000,score);
+char* stringOfInt(int v){
+	int nb; // Compte le nombre de chiffre composant le paramètre v
+	if (v == 0){
+		nb = 1;
+	}else{
+		int i = abs(v); 
+		while (i > 0){
+        	i = i / 10;
+        	nb++;
+		}
+	}
+	char* c = malloc(sizeof(char*)*nb);
+	sprintf(c,"%d",v);
 	return c;
+}
+
+char* stringConcat(char* s1, char* s2){ // Solution temporaire, pour l'instant aucun moyen de connaitre la longueur vu qu'on ne peut pas mettre de '\0'
+	char* res = malloc(sizeof(char)*100); // 100 est arbitraire ici
+	sprintf(res, "%s%s",s1,s2);
+	return res;
+}
+
+void deleteIntPtr(int* i){
+	free(i);
+}
+
+void deleteCharPtr(char* c){
+	free(c);
 }
 
 int square(int v){

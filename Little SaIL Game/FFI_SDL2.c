@@ -11,28 +11,24 @@ int initTTF(){
 	return TTF_Init();
 }
 
-int quitTTF(){
-	TTF_Quit();
-	return 1;
+void quitSDL2(){
+	SDL_Quit();
 }
 
-int quitSDL2(){
-	SDL_Quit();
-	return 1;
+void quitTTF(){
+	TTF_Quit();
 }
 
 TTF_Font* openFont(const char* file, int size){
-	return TTF_OpenFont(file, size); // Vérifier l'extension du fichier
+	return TTF_OpenFont(file, size);
 }
 
-int closeFont(TTF_Font* f){
+void closeFont(TTF_Font* f){
 	TTF_CloseFont(f);
-	return 1;
 }
 
-int getSizeText(TTF_Font* f, const char* text, int* w, int* h){
+void getSizeText(TTF_Font* f, const char* text, int* w, int* h){
  	TTF_SizeText(f, text, w, h);
-	return 1;
 }
 
 SDL_Color createColor(int r, int g, int b, int a){
@@ -44,23 +40,20 @@ SDL_Surface* renderTextSolid(TTF_Font* f, const char* text, SDL_Color color){
 	return TTF_RenderText_Solid(f, text, color); 
 }
 
-int freeSurface(SDL_Surface* surface){
+void freeSurface(SDL_Surface* surface){
 	SDL_FreeSurface(surface);
-	return 1;
 }
 
 SDL_Texture* createTextureFromSurface(SDL_Renderer* r, SDL_Surface* s){
 	return SDL_CreateTextureFromSurface(r,s);
 }
 
-int destroyTexture(SDL_Texture *t){
+void destroyTexture(SDL_Texture *t){
 	SDL_DestroyTexture(t);
-	return 1;
 }
 
-int renderCopy(SDL_Renderer* r, SDL_Texture* t, SDL_Rect* rect){
+void renderCopy(SDL_Renderer* r, SDL_Texture* t, SDL_Rect* rect){
 	SDL_RenderCopy(r, t, NULL, rect);
-	return 1;
 }
 
 SDL_Window* createWindow(const char* name,int width, int height){
@@ -87,9 +80,12 @@ int verificationRenderer(SDL_Renderer *r){
 	return 0;
 }
 
-int setColor(SDL_Renderer* rend, int r, int g, int b, int a){
+void setColor(SDL_Renderer* rend, int r, int g, int b, int a){
 	SDL_SetRenderDrawColor(rend, r, g, b, a);
-	return 0;
+}
+
+void setBackgroundColor(SDL_Renderer* rend){
+	SDL_RenderClear(rend);
 }
 
 SDL_Rect* createRect(int pos_x, int pos_y, int width, int height){
@@ -101,24 +97,16 @@ SDL_Rect* createRect(int pos_x, int pos_y, int width, int height){
 	return r;
 }	
 
-int drawRect(SDL_Renderer* rend, SDL_Rect* r){
+void drawRect(SDL_Renderer* rend, SDL_Rect* r){
 	SDL_RenderFillRect(rend, r);
-	return 0;
 }
 
-int refresh(SDL_Renderer* rend){
+void refresh(SDL_Renderer* rend){
 	SDL_RenderPresent(rend);
-	return 0;
 }
 
-int delay(int ms){
+void delay(int ms){
 	SDL_Delay(ms);
-	return 0;
-}
-
-int setBackgroundColor(SDL_Renderer* rend){
-	SDL_RenderClear(rend);
-	return 0;
 }
 
 SDL_Event* createEvent(){
@@ -141,10 +129,6 @@ int getSDLKEYDOWN(){
 	return SDL_KEYDOWN;
 }
 
-int getScancodeEvent(SDL_Event* ev){
-	return (*ev).key.keysym.scancode;
-}
-
 int getSPACESCANCODE(){
 	return SDL_SCANCODE_SPACE;
 }
@@ -153,9 +137,12 @@ int getTypeEvent(SDL_Event* ev){
 	return (*ev).type;
 }
 
-int getMousePosition(int* x, int* y){
+int getScancodeEvent(SDL_Event* ev){
+	return (*ev).key.keysym.scancode;
+}
+
+void getMousePosition(int* x, int* y){
 	SDL_GetMouseState(x,y);
-	return 1;
 }
 
 int rectIntersection(SDL_Rect* r1, SDL_Rect* r2){
@@ -165,14 +152,12 @@ int rectIntersection(SDL_Rect* r1, SDL_Rect* r2){
 	return 0;
 }
 
-int deleteRect(SDL_Rect* r){
+void deleteRect(SDL_Rect* r){
 	free(r);
-	return 1;
 }
 
-int deleteEvent(SDL_Event* ev){
+void deleteEvent(SDL_Event* ev){
 	free(ev);
-	return 1;
 }
 
 int deleteWindow(SDL_Window* w){

@@ -2,6 +2,20 @@
 Pour compiler :
 gcc -c FFI_SDL2.c
 dune exec sailor -- ./main.sl
+(Pour ce commit, le menu n'est pas encore fait, donc modifier les fonctions appelés dans main.sl)
 
 Jeu 1 :
 Appuyer sur la barre d'espace lorsque la barre noire est dans la zone bleue
+
+Jeu 2 :
+Controler le carré blanc avec la souris et esquiver la zone bleue
+
+Langton :
+Automate cellulaire -> Fourmi de Langton
+	Grille de taille 80*60, les cases sont blanches ou vertes.
+	Initialement la grille est blanche, la fourmi est au centre (case bleu).
+	
+	Si la fourmi est sur une case blanche, elle tourne de 90° vers la droite et avance de une case
+	Si la fourmi est sur une case verte, elle tourne de 90° vers la gauche et avance de une case
+	Dans les deux cas, la fourmi inverse la couleur de la case qu'elle quitte.
+
