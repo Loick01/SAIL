@@ -35,7 +35,7 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 	drawRect(r, player);
 	
 	/* Apparemment il y a un problème avec les tableaux dont les éléments sont de types externes
-	var tabRect : array<sdlrect;3>;
+	var mut tabRect : array<sdlrect;3>;
 	setColor(r,230,45,69,255);
 	var n : int = 0;
 	var i : int = 0;
@@ -56,7 +56,7 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 	}
 	*/
 	
-	setColor(r,230,45,69,255);
+	setColor(r,13, 6, 69,255);
 	var rx : int = getIntValue(rect_x);
 	var ry : int = getIntValue(rect_y);
 	
@@ -94,6 +94,7 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 		return 0;
 	}
 	
+	
 	deleteRect(rct1);
 	deleteRect(rct2);
 	deleteRect(rct3);
@@ -107,7 +108,7 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 	return 1;
 }				
 			
-process Main(){
+method jeu2(){
 	setAleatoire();
 	
 	var window_width : int = 800;
