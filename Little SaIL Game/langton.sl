@@ -15,7 +15,7 @@ method drawTab(tab : array<int;4800>,r : renderer,antPos : int){
 			}
 		}
 		
-		var rct : sdlrect = createRect((i % 80)*10,(i/80)*10, 9, 9); // 10 est la taille d'un carré
+		var rct : sdlrect = createRect((i % 80)*10,(i/80)*10, 9, 9); // 10 est la taille d'un carré, 80 est le nombre de colonne
 		drawRect(r, rct);
 		deleteRect(rct);
 		
@@ -40,7 +40,7 @@ method step(nb_col : int ,antDir : int ) : int {
 }
 
 method langton(r : renderer){
-	var timeRefresh : int = 20; // ms entre 2 refresh
+	var timeRefresh : int = 3; // ms entre 2 refresh
 	var ev : sdlevent = createEvent();
 	var sdlquit : sdleventcode = getSDLQUIT();
 	

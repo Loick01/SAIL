@@ -9,11 +9,11 @@ method printOnScreen(r : renderer, temps : int, score : int) : int{
 	var tempsValue : string = stringOfInt(temps/1000);
 	var scoreValue : string = stringOfInt(score);
 	
-	var stringTemps : string = stringConcat("Temps restant : ",tempsValue); // stringConcat sera à revoir dans la FFI
+	var stringTemps : string = stringConcat("Temps restant : ",tempsValue);
 	var stringScore : string = stringConcat("        Score : ",scoreValue);
 	var text : string = stringConcat(stringTemps,stringScore);
 	
-	var widthText : ptr_int = createIntValue(0); // 0 par défaut, à voir si on crée une autre fonction sans paramètre
+	var widthText : ptr_int = createIntValue(0);
 	var heightText : ptr_int = createIntValue(0);
 	getSizeText(font,text,widthText,heightText);
 	var textRect : sdlrect = createRect(20,600 - getIntValue(heightText) - 10, getIntValue(widthText), getIntValue(heightText));

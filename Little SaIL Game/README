@@ -10,12 +10,28 @@ Appuyer sur la barre d'espace lorsque la barre noire est dans la zone bleue
 Jeu 2 :
 Controler le carré blanc avec la souris et esquiver la zone bleue
 
-Langton :
-Automate cellulaire -> Fourmi de Langton
+Langton (Fourmi de Langton) :
+	
 	Grille de taille 80*60, les cases sont blanches ou vertes.
 	Initialement la grille est blanche, la fourmi est au centre (case bleu).
 	
 	Si la fourmi est sur une case blanche, elle tourne de 90° vers la droite et avance de une case
 	Si la fourmi est sur une case verte, elle tourne de 90° vers la gauche et avance de une case
 	Dans les deux cas, la fourmi inverse la couleur de la case qu'elle quitte.
+
+Jeu de la vie : (Problème avec la fermeture de la fenêtre)
+	Grille de taille 40*30, les cases sont blanches (cellule morte) ou vertes (cellules vivantes).
+	Par défaut, la grille est vide.
+	
+	Au lancement, cliquer sur la barre d'espace, puis cliquer sur les cellules pour les rendre vivantes.
+	Puis appuyez à nouveau sur espace pour relancer.
+	Répeter à volonté.
+
+
+TODO :
+// Pourquoi ça ne marche pas ?
+var n : int = 5;	
+var mut posTab : array<int;8> = [n - 1, n, n + 1, -1, 1,n - 1, n, n + 1];
+
+Warning à la compilation à cause du caractère '\0', voir si on peut faire autrement
 

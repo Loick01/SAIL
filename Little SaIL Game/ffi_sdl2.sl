@@ -53,6 +53,9 @@ extern "FFI_SDL2.o SDL2 SDL2_ttf" {
 	method getSDLQUIT() : sdleventcode;
 	method getSDLKEYDOWN() : sdleventcode;
 	method getSPACESCANCODE() : sdleventcode;
+	method getMOUSEBUTTONDOWN() : sdleventcode;
+	method getMouseButton(ev : sdlevent) : sdleventcode;
+	method getMOUSEBUTTONLEFTCODE() : sdleventcode;
 	
 	method getTypeEvent(ev : sdlevent) : sdleventcode;
 	method getScancodeEvent(ev : sdlevent) : sdleventcode;

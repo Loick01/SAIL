@@ -133,12 +133,24 @@ int getSPACESCANCODE(){
 	return SDL_SCANCODE_SPACE;
 }
 
+int getMOUSEBUTTONDOWN(){
+	return SDL_MOUSEBUTTONDOWN;
+}
+
 int getTypeEvent(SDL_Event* ev){
 	return (*ev).type;
 }
 
 int getScancodeEvent(SDL_Event* ev){
 	return (*ev).key.keysym.scancode;
+}
+
+int getMouseButton(SDL_Event* ev){
+	return (*ev).button.button; 
+}
+
+int getMOUSEBUTTONLEFTCODE(){
+	return SDL_BUTTON_LEFT;
 }
 
 void getMousePosition(int* x, int* y){
