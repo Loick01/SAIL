@@ -1,6 +1,6 @@
 type ptr_int
 
-extern "FFI_C_UTILS.o m" { // m is for the math library ( -lm option)
+extern "ffi_c_utils.o m" { // m is for the math library ( -lm option)
 
 	method generateRandom(min : int, max : int) : int;
 	method setAleatoire();

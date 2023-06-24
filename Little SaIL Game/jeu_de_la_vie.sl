@@ -1,6 +1,6 @@
 import print_utils
-import ffi_sdl2
-import ffi_c_utils
+import sailor_sdl2
+import sailor_c_utils
 
 method drawTab(tab : array<int;1200>,r : renderer){
 	var i : int = 0;
@@ -92,8 +92,6 @@ method step(tab  : array<int;1200>, nb_line : int, nb_col : int) : array<int;120
 
 method jeu_de_la_vie(r : renderer){
 	var timeRefresh : int = 100; // ms entre 2 refresh
-	var ev : sdlevent = createEvent();
-	var sdlquit : sdleventcode = getSDLQUIT();
 	
 	//var square_size : int = 20; // Carrée de taille 10*10
 	var nb_line : int = 30;
@@ -103,22 +101,24 @@ method jeu_de_la_vie(r : renderer){
 	var mut tab : array<int;1200>;
 	
 	var i : int = 0;
-	while (i < nb_line * nb_col){ // Rempli le tableau avec des 1, donc des cellules vivantes (-1 pour cellules mortes)
-		tab[i] = 1;
+	while (i < nb_line * nb_col){ // Rempli le tableau avec des -1, donc des cellules mortes (1 pour cellules vivantes)
+		tab[i] = -1;
 		i = i + 1;
 		
 	}
 	
+	var ev : sdlevent = createEvent();
 	var spacePressed : bool = false;
 	var sdlkeydown : sdleventcode = getSDLKEYDOWN();
 	var sdlspace_scancode : sdleventcode = getSPACESCANCODE();
 	var sdlmousebuttondown : sdleventcode = getMOUSEBUTTONDOWN();
 	var sdlbuttonleft : sdleventcode = getMOUSEBUTTONLEFTCODE();
+	var sdlquit : sdleventcode = getSDLQUIT();
 	var mx : ptr_int = createIntValue(0);
 	var my : ptr_int = createIntValue(0);
 	
 	loop{ // Idem que while(true)
-		while (isEvent(ev) == 1){
+		while (pollEvent(ev) == 1){
 			if (getTypeEvent(ev) == sdlquit){
 				break;
 			}
@@ -146,7 +146,7 @@ method jeu_de_la_vie(r : renderer){
 		}
 		
 	}
-	
+	deleteEvent(ev);
 	deleteIntPtr(mx);
 	deleteIntPtr(my);
 }

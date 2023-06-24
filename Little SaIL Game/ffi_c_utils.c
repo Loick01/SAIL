@@ -37,16 +37,16 @@ char* stringOfInt(int v){
         	nb++;
 		}
 	}
-	char* c = malloc(sizeof(char*)*nb + 1);
-	sprintf(c,"%d\0",v);
+	char* c = malloc(sizeof(char*)*nb);
+	sprintf(c,"%d",v);
 	return c;
 }
 
 char* stringConcat(char* s1, char* s2){
 	int size_s1 = strlen(s1); // Size without '\0'
 	int size_s2 = strlen(s2);
-	char* res = malloc(sizeof(char)*(size_s1+size_s2+1));
-	sprintf(res, "%s%s\0",s1,s2);
+	char* res = malloc(sizeof(char)*(size_s1+size_s2));
+	sprintf(res, "%s%s",s1,s2);
 	return res;
 }
 

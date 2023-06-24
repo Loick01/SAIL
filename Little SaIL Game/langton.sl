@@ -1,12 +1,12 @@
 import print_utils
-import ffi_sdl2
-import ffi_c_utils
+import sailor_sdl2
+import sailor_c_utils
 
 method drawTab(tab : array<int;4800>,r : renderer,antPos : int){
 	var i : int = 0;
 	while (i < 4800){ 
 		if (i == antPos){
-			setColor(r,13, 6, 69,255);
+			setColor(r,0, 0, 0, 255);
 		}else{
 			if (tab[i] == 1){
 				setColor(r, 255, 255, 255, 255);
@@ -61,7 +61,7 @@ method langton(r : renderer){
 	var antPos : int = (nb_line/2) * nb_col + (nb_col/2); // Position initiale de la fourmi
 	var antDir : int = 0; // 0 vers le haut, 1 vers la droite, 2 vers le bas , 3 vers la gauche  (initialement vers le haut)
 	loop{ // Idem que while(true)
-		if (isEvent(ev) == 1){
+		if (pollEvent(ev) == 1){
 			if(getTypeEvent(ev) == sdlquit){
 				break;
 			}
@@ -86,4 +86,6 @@ method langton(r : renderer){
 		antPos = antPos + step(nb_col,antDir); // On passe en paramètre le nombre de colonne pour savoir de combien avancer pour changer de ligne
 		
 	}
+	deleteEvent(ev);
 }
+

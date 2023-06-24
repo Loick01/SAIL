@@ -1,6 +1,6 @@
 import print_utils
-import ffi_sdl2
-import ffi_c_utils
+import sailor_sdl2
+import sailor_c_utils
 
 method printOnScreen(r : renderer, temps : int, score : int) : int{
 	var font : sdlfont = openFont("roboto-bold.ttf", 30); // Déplacer toutes ces valeurs (pour ne pas avoir à les créer à chaque frame)
@@ -41,7 +41,7 @@ method printOnScreen(r : renderer, temps : int, score : int) : int{
 
 
 method playGame(r : renderer,ev : sdlevent, red_x : int, red_width : int, player_x : ptr_int, direction : ptr_int, sdlquit : sdleventcode ,sdlkeydown : sdleventcode, sdlspace_scancode : sdleventcode, whiteZone : sdlrect, redZone : sdlrect, lengthGame : int, score : ptr_int, missRed : ptr_int) : int { // Problème avec 2ème définition d'un même type à cause des arguments ici
-	if (isEvent(ev) == 1){
+	if (pollEvent(ev) == 1){
 		if(getTypeEvent(ev) == sdlquit){
 			return 0;
 		}

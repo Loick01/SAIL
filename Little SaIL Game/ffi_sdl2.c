@@ -101,6 +101,18 @@ void drawRect(SDL_Renderer* rend, SDL_Rect* r){
 	SDL_RenderFillRect(rend, r);
 }
 
+SDL_Point* createPoint(int v1, int v2){
+	SDL_Point* p = malloc(sizeof(SDL_Point));
+	p->x = v1;
+	p->x = v2;
+	return p;
+}
+
+void setPointValues(SDL_Point* p, int v1, int v2){
+	p->x = v1;
+	p->y = v2;
+}
+
 void refresh(SDL_Renderer* rend){
 	SDL_RenderPresent(rend);
 }
@@ -114,11 +126,12 @@ SDL_Event* createEvent(){
 	return e;
 }
 
-int isEvent(SDL_Event* ev){
-	if (SDL_PollEvent(ev)){
-		return 1;
-	}
-	return 0;
+int pollEvent(SDL_Event* ev){
+	return SDL_PollEvent(ev);
+}
+
+int waitEvent(SDL_Event* ev){
+	return SDL_WaitEvent(ev);
 }
 
 int getSDLQUIT(){
@@ -164,8 +177,19 @@ int rectIntersection(SDL_Rect* r1, SDL_Rect* r2){
 	return 0;
 }
 
+int pointInRect(SDL_Point* p, SDL_Rect* r){
+	if (SDL_PointInRect(p,r)){
+		return 1;
+	}
+	return 0;
+}
+
 void deleteRect(SDL_Rect* r){
 	free(r);
+}
+
+void deletePoint(SDL_Point* p){
+	free(p);
 }
 
 void deleteEvent(SDL_Event* ev){

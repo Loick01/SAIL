@@ -1,7 +1,6 @@
 import print_utils
-import ffi_sdl2
-import ffi_c_utils
-
+import sailor_sdl2
+import sailor_c_utils
 
 
 method printOnScreen(r : renderer, score : int) : int{
@@ -34,7 +33,7 @@ method printOnScreen(r : renderer, score : int) : int{
 }
 
 method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : ptr_int, mouse_y : ptr_int, center_x : int, center_y : int,square_x : ptr_int,square_y : ptr_int,radius : int, sw : int, sh : int,rect_x : ptr_int,rect_y : ptr_int, random : int,score : int) : int{
-	if (isEvent(ev) == 1){
+	if (pollEvent(ev) == 1){
 		if(getTypeEvent(ev) == sdlquit){
 			return 0;
 		}

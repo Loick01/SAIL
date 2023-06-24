@@ -1,8 +1,9 @@
-import ffi_c_utils
+import sailor_c_utils
 
 type window
 type renderer
 type sdlrect
+type sdlpoint
 type sdlevent
 type sdleventcode
 type sdlsurface
@@ -10,7 +11,7 @@ type sdltexture
 type sdlfont
 type sdlcolor
 	
-extern "FFI_SDL2.o SDL2 SDL2_ttf" {
+extern "ffi_sdl2.o SDL2 SDL2_ttf" {
 	method initSDL2() : int;
 	method quitSDL2();
 	
@@ -44,11 +45,16 @@ extern "FFI_SDL2.o SDL2 SDL2_ttf" {
 	method createRect(x : int, y : int, width : int, height : int) : sdlrect;
 	method drawRect(rend : renderer, r : sdlrect);
 	
+	method createPoint(x : int, y : int) : sdlpoint;
+	method setPointValues(p : sdlpoint, x : int, y : int);
+	method deletePoint(p : sdlpoint);
+	
 	method refresh(rend : renderer);
 	method delay(ms : int);
 	
 	method createEvent() : sdlevent;
-	method isEvent(ev : sdlevent) : int;
+	method pollEvent(ev : sdlevent) : int;
+	method waitEvent(ev : sdlevent) : int;
 	
 	method getSDLQUIT() : sdleventcode;
 	method getSDLKEYDOWN() : sdleventcode;
@@ -63,6 +69,7 @@ extern "FFI_SDL2.o SDL2 SDL2_ttf" {
 	method getMousePosition(x : ptr_int, y : ptr_int);
 	
 	method rectIntersection(r1 : sdlrect, r2 : sdlrect) : int;
+	method pointInRect(p : sdlpoint, r : sdlrect) : int;
 	
 	method deleteRect(r : sdlrect);
 	method deleteEvent(ev : sdlevent);
