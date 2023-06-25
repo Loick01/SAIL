@@ -1,7 +1,9 @@
 type ptr_int
+type ptr_void
 
 extern "ffi_c_utils.o m" { // m is for the math library ( -lm option)
-
+	
+	method getNULLptr() : ptr_void;
 	method generateRandom(min : int, max : int) : int;
 	method setAleatoire();
 	
@@ -11,9 +13,8 @@ extern "ffi_c_utils.o m" { // m is for the math library ( -lm option)
 	
 	method stringOfInt(v : int) : string;
 	method stringConcat(s1 : string, s2 : string) : string;
-	
-	method deleteIntPtr(i : ptr_int) : int;
-	method deleteCharPtr(c : string) : int;
+
+	method deletePointer(p : ptr_void) = "free";
 	
 	method square(v : int) : int;
 	method squareroot(v : int) : int;

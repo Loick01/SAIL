@@ -83,8 +83,9 @@ process Main(){
 	tabSurfaces[button_num] = surface;
 	tabRectText[button_num] = textRect;
 	
+	var sdltrue : sdlbool = getSdlTrue();
+	var nullPtr : ptr_void = getNULLptr();
 	
-		
 	loop{
 		setColor(r, 25, 144, 38, 255);
 		setBackgroundColor(r);
@@ -93,7 +94,7 @@ process Main(){
 		for h in (0,4){ // (4 exclus)
 			drawRect(r,tabButton[h]);			
 			var texture : sdltexture = createTextureFromSurface(r,tabSurfaces[h]);
-			renderCopy(r, texture, tabRectText[h]);
+			renderCopy(r, texture, nullPtr, tabRectText[h]);
 			destroyTexture(texture);
 		}
 		
@@ -132,24 +133,24 @@ process Main(){
 	}
 	
 	for deleteCount in (0,4){ // (4 exclus)
-		deleteRect(tabRectText[deleteCount]);
+		deletePointer(tabRectText[deleteCount]);
 		freeSurface(tabSurfaces[deleteCount]);
 	}
 	
 	print_string("Sortie de la boucle\n");
 	
 	for k in (0,4){ // (4 exclus)
-		deleteRect(tabButton[k]);
+		deletePointer(tabButton[k]);
 	}
 	
 	closeFont(font);
-	deleteIntPtr(mx);
-	deleteIntPtr(my);
-	deletePoint(point);
-	deleteIntPtr(widthText);
-	deleteIntPtr(heightText);
+	deletePointer(mx);
+	deletePointer(my);
+	deletePointer(point);
+	deletePointer(widthText);
+	deletePointer(heightText);
 	
-	deleteEvent(ev);
+	deletePointer(ev);
 	deleteRenderer(r); // Attention : Toujours supprimer le renderer avant la window
 	deleteWindow(w);
 	

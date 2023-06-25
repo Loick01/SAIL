@@ -2,7 +2,7 @@ run :
 	./games
 
 clean :
-	rm main *.o *.mir
+	rm games *.o *.mir ./bindings/*.o ./bindings/*.mir
 	
 build :
 	gcc -c ffi_sdl2.c ffi_c_utils.c

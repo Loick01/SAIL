@@ -13,7 +13,7 @@ method drawTab(tab : array<int;1200>,r : renderer){
 		
 		var rct : sdlrect = createRect((i % 40)*20,(i/40)*20, 18, 18); // 20 est la taille d'un carré, 40 est le nombre de colonne
 		drawRect(r, rct);
-		deleteRect(rct);
+		deletePointer(rct);
 		
 		i = i + 1;	
 	}
@@ -146,7 +146,7 @@ method jeu_de_la_vie(r : renderer){
 		}
 		
 	}
-	deleteEvent(ev);
-	deleteIntPtr(mx);
-	deleteIntPtr(my);
+	deletePointer(ev);
+	deletePointer(mx);
+	deletePointer(my);
 }

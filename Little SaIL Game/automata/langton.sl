@@ -17,7 +17,7 @@ method drawTab(tab : array<int;4800>,r : renderer,antPos : int){
 		
 		var rct : sdlrect = createRect((i % 80)*10,(i/80)*10, 9, 9); // 10 est la taille d'un carré, 80 est le nombre de colonne
 		drawRect(r, rct);
-		deleteRect(rct);
+		deletePointer(rct);
 		
 		i = i + 1;	
 	}
@@ -86,6 +86,6 @@ method langton(r : renderer){
 		antPos = antPos + step(nb_col,antDir); // On passe en paramètre le nombre de colonne pour savoir de combien avancer pour changer de ligne
 		
 	}
-	deleteEvent(ev);
+	deletePointer(ev);
 }
 

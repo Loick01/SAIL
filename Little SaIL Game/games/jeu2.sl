@@ -17,22 +17,23 @@ method printOnScreen(r : renderer, score : int) : int{
 	
 	var surface : sdlsurface = renderTextSolid(font, text, color);
 	var texture : sdltexture = createTextureFromSurface(r,surface);
+	var nullPtr : ptr_void = getNULLptr();
 	
-	renderCopy(r, texture, textRect);
+	renderCopy(r, texture, nullPtr, textRect);
 	
 	destroyTexture(texture);
 	freeSurface(surface);
 	closeFont(font);
 	
-	deleteIntPtr(widthText);
-	deleteIntPtr(heightText);
-	deleteCharPtr(text);
-	deleteCharPtr(scoreValue);
+	deletePointer(widthText);
+	deletePointer(heightText);
+	deletePointer(text);
+	deletePointer(scoreValue);
 	
 	return 1;
 }
 
-method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : ptr_int, mouse_y : ptr_int, center_x : int, center_y : int,square_x : ptr_int,square_y : ptr_int,radius : int, sw : int, sh : int,rect_x : ptr_int,rect_y : ptr_int, random : int,score : int) : int{
+method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : ptr_int, mouse_y : ptr_int, center_x : int, center_y : int,square_x : ptr_int,square_y : ptr_int,radius : int, sw : int, sh : int,rect_x : ptr_int,rect_y : ptr_int, random : int,score : int, sdltrue : sdlbool) : int{
 	if (pollEvent(ev) == 1){
 		if(getTypeEvent(ev) == sdlquit){
 			return 0;
@@ -74,7 +75,7 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 		tabRect[n] = rct1;
 		
 		if (random == n){
-			deleteRect(rct1);
+			deletePointer(rct1);
 			random = -1; // Pour s'assurer que la condition soit fausse
 		}else{
 			drawRect(r, rct1);
@@ -85,7 +86,7 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 		tabRect[n] = rct2;
 		
 		if (random == n){
-			deleteRect(rct2);
+			deletePointer(rct2);
 			random = -1;
 		}else{
 			drawRect(r, rct2);
@@ -97,14 +98,14 @@ method playGame2(r : renderer, ev : sdlevent, sdlquit : sdleventcode,mouse_x : p
 	
 	i = 0;
 	while (i < 3){
-		if (rectIntersection(player,tabRect[i]) == 1){
+		if (rectIntersection(player,tabRect[i]) == sdltrue){
 			return 0;
 		}else{
-			deleteRect(tabRect[i]);
+			deletePointer(tabRect[i]);
 		}
 		i = i + 1;
 	}	
-	deleteRect(player);
+	deletePointer(player);
 	
 	printOnScreen(r, score); // Affiche sur la fenêtre le score et le temps restant
 	setIntValue(rect_x,getIntValue(rect_x)+3); // On le bouge de la moitié de ce qu'on le réduit (6/2 = 3)
@@ -135,6 +136,7 @@ method jeu2(r : renderer){
 	var rect_y : ptr_int = createIntValue(0);
 	var sw: int = window_width; // Taille d'un côté du carré
 	var sh : int = initialEpaisseur; // Epaisseur des rect formant le carré
+	var sdltrue : sdlbool = getSdlTrue();
 	
 	var play : int = 1;
 	while(play == 1){
@@ -143,7 +145,7 @@ method jeu2(r : renderer){
 		setIntValue(rect_x,0);
 		setIntValue(rect_y,(window_width-window_height) / -2); // On suppose que la fenetre est plus longue que haute, donc le carré déborde en haut et en bas au départ
 		while(sw > sh){
-			play = playGame2(r,ev,sdlquit,mouse_x,mouse_y,center_x, center_y,square_x,square_y,radius,sw, sh,rect_x,rect_y,random,score);
+			play = playGame2(r,ev,sdlquit,mouse_x,mouse_y,center_x, center_y,square_x,square_y,radius,sw, sh,rect_x,rect_y,random,score,sdltrue);
 			sw = sw - 6;
 			refresh(r);
 			delay(timeRefresh);
@@ -159,12 +161,12 @@ method jeu2(r : renderer){
 	print_int(score);
 	print_newline();
 	
-	deleteEvent(ev);
+	deletePointer(ev);
 	
-	deleteIntPtr(mouse_x);
-	deleteIntPtr(mouse_y);
-	deleteIntPtr(square_x);
-	deleteIntPtr(square_y);
-	deleteIntPtr(rect_x);
-	deleteIntPtr(rect_y);
+	deletePointer(mouse_x);
+	deletePointer(mouse_y);
+	deletePointer(square_x);
+	deletePointer(square_y);
+	deletePointer(rect_x);
+	deletePointer(rect_y);
 }

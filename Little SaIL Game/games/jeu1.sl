@@ -20,21 +20,22 @@ method printOnScreen(r : renderer, temps : int, score : int) : int{
 	
 	var surface : sdlsurface = renderTextSolid(font, text, color);
 	var texture : sdltexture = createTextureFromSurface(r,surface);
+	var nullPtr : ptr_void = getNULLptr();
 	
-	renderCopy(r, texture, textRect);
+	renderCopy(r, texture, nullPtr, textRect);
 	
 	destroyTexture(texture);
 	freeSurface(surface);
 	closeFont(font);
 	
-	deleteIntPtr(widthText);
-	deleteIntPtr(heightText);
+	deletePointer(widthText);
+	deletePointer(heightText);
 	
-	deleteCharPtr(text);
-	deleteCharPtr(stringScore);
-	deleteCharPtr(stringTemps);
-	deleteCharPtr(scoreValue);
-	deleteCharPtr(tempsValue);
+	deletePointer(text);
+	deletePointer(stringScore);
+	deletePointer(stringTemps);
+	deletePointer(scoreValue);
+	deletePointer(tempsValue);
 	
 	return 1;
 }
@@ -93,7 +94,7 @@ method playGame(r : renderer,ev : sdlevent, red_x : int, red_width : int, player
     	}
     }
     
-    deleteRect(player);
+    deletePointer(player);
     
 	return 1;
 }
@@ -128,7 +129,7 @@ method jeu1(r : renderer){
 		    }
 		    delay(timeRefresh);
 		}
-		deleteRect(redZone);
+		deletePointer(redZone);
 		if (play == 0){
 			break;
 		} 
@@ -139,12 +140,12 @@ method jeu1(r : renderer){
 	print_int(getIntValue(score));
 	print_newline();
 	
-	deleteRect(whiteZone);
-	deleteEvent(ev);
-	deleteIntPtr(player_x);
-	deleteIntPtr(direction);
-	deleteIntPtr(score);
-	deleteIntPtr(missRed);	
+	deletePointer(whiteZone);
+	deletePointer(ev);
+	deletePointer(player_x);
+	deletePointer(direction);
+	deletePointer(score);
+	deletePointer(missRed);	
 }
 
 

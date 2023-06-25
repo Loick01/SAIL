@@ -4,6 +4,10 @@
 #include <math.h>
 #include <string.h>
 
+void* getNULLptr(){
+	return NULL;
+}
+
 int generateRandom(int min, int max){
 	return min + (rand() % (max-min+1));
 }
@@ -48,14 +52,6 @@ char* stringConcat(char* s1, char* s2){
 	char* res = malloc(sizeof(char)*(size_s1+size_s2));
 	sprintf(res, "%s%s",s1,s2);
 	return res;
-}
-
-void deleteIntPtr(int* i){
-	free(i);
-}
-
-void deleteCharPtr(char* c){
-	free(c);
 }
 
 int square(int v){
