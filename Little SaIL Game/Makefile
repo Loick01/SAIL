@@ -1,10 +1,10 @@
 run :
-	./games
+	./main
 
 clean :
-	rm games *.o *.mir ./bindings/*.o ./bindings/*.mir
+	rm main *.o *.mir ./bindings/*.o ./bindings/*.mir ./games/*.o ./games/*.mir ./automata/*.o ./automata/*.mir
 	
 build :
 	gcc -c ffi_sdl2.c ffi_c_utils.c
-	dune exec sailor -- ./games.sl 
+	dune exec sailor -- ./main.sl 
 

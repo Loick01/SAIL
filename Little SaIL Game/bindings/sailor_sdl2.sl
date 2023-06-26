@@ -12,7 +12,7 @@ type sdlfont
 type sdlcolor
 type sdlbool
 	
-extern "ffi_sdl2.o SDL2 SDL2_ttf" {
+extern "ffi_sdl2.o SDL2 SDL2_ttf SDL2_image" {
 	method initSDL2() : int;
 	method quitSDL2();
 	
@@ -63,8 +63,10 @@ extern "ffi_sdl2.o SDL2 SDL2_ttf" {
 	method getSDLKEYDOWN() : sdleventcode;
 	method getSPACESCANCODE() : sdleventcode;
 	method getMOUSEBUTTONDOWN() : sdleventcode;
+	method getMOUSEBUTTONUP() : sdleventcode;
 	method getMouseButton(ev : sdlevent) : sdleventcode;
 	method getMOUSEBUTTONLEFTCODE() : sdleventcode;
+	method getMOUSEBUTTONRIGHTCODE() : sdleventcode;
 	
 	method getTypeEvent(ev : sdlevent) : sdleventcode;
 	method getScancodeEvent(ev : sdlevent) : sdleventcode;
@@ -73,6 +75,10 @@ extern "ffi_sdl2.o SDL2 SDL2_ttf" {
 	
 	method rectIntersection(r1 : sdlrect, r2 : sdlrect) : sdlbool = "SDL_HasIntersection";
 	method pointInRect(p : sdlpoint, r : sdlrect) : int;// = "SDL_PointInRect";
+	
+	method loadImg(file : string) : sdlsurface = "IMG_Load";
+	method getSizeTexture(t : sdltexture, p1 : ptr_void, p2 : ptr_void, w : ptr_int, h : ptr_int) = "SDL_QueryTexture";
+	
 	
 	method deleteWindow(w : window) : int = "SDL_DestroyWindow";
 	method deleteRenderer(r : renderer) : int = "SDL_DestroyRenderer"

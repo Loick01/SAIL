@@ -90,10 +90,10 @@ method step(tab  : array<int;1200>, nb_line : int, nb_col : int) : array<int;120
 }
 
 
-method jeu_de_la_vie(r : renderer){
+method jeu_de_la_vie(r : renderer) : int{
 	var timeRefresh : int = 100; // ms entre 2 refresh
 	
-	//var square_size : int = 20; // Carrée de taille 10*10
+	//var square_size : int = 20; // Carrée de taille 20*20
 	var nb_line : int = 30;
 	var nb_col : int = 40;
 	
@@ -112,26 +112,42 @@ method jeu_de_la_vie(r : renderer){
 	var sdlkeydown : sdleventcode = getSDLKEYDOWN();
 	var sdlspace_scancode : sdleventcode = getSPACESCANCODE();
 	var sdlmousebuttondown : sdleventcode = getMOUSEBUTTONDOWN();
+	var sdlmousebuttonup : sdleventcode = getMOUSEBUTTONUP();
 	var sdlbuttonleft : sdleventcode = getMOUSEBUTTONLEFTCODE();
+	var sdlbuttonright : sdleventcode = getMOUSEBUTTONRIGHTCODE();
 	var sdlquit : sdleventcode = getSDLQUIT();
 	var mx : ptr_int = createIntValue(0);
 	var my : ptr_int = createIntValue(0);
 	
+	var leftPressed : bool = false;
+	var rightPressed : bool = false;
+	
 	loop{ // Idem que while(true)
 		while (pollEvent(ev) == 1){
 			if (getTypeEvent(ev) == sdlquit){
-				break;
+				return 1;
 			}
 			if (getTypeEvent(ev) == sdlkeydown){
 				if (getScancodeEvent(ev)== sdlspace_scancode){
 					spacePressed = !spacePressed; // Inverse 
 				}
 			}
-			if (getTypeEvent(ev) == sdlmousebuttondown and spacePressed){
-				if (getMouseButton(ev) == sdlbuttonleft){
-					getMousePosition(mx,my);
-					var pos : int = (getIntValue(my) / 20) * nb_col + (getIntValue(mx) / 20);
-					tab[pos] = tab[pos] * -1;	
+			if (spacePressed){
+				if (getTypeEvent(ev) == sdlmousebuttondown){
+					if (getMouseButton(ev) == sdlbuttonleft){
+						leftPressed = true;
+					}	
+					if (getMouseButton(ev) == sdlbuttonright){
+						rightPressed = true;
+					}	
+				}
+				if (getTypeEvent(ev) == sdlmousebuttonup){
+					if (getMouseButton(ev) == sdlbuttonleft){
+						leftPressed = false;
+					}	
+					if (getMouseButton(ev) == sdlbuttonright){
+						rightPressed = false;
+					}	
 				}
 			}
 		}
@@ -143,6 +159,15 @@ method jeu_de_la_vie(r : renderer){
 		delay(timeRefresh);
 		if (!spacePressed){
 			tab = step(tab,nb_line,nb_col);
+		}
+		
+		getMousePosition(mx,my);
+		var pos : int = (getIntValue(my) / 20) * nb_col + (getIntValue(mx) / 20);
+		if (leftPressed and tab[pos] == -1){
+			tab[pos] = 1;
+		}
+		if (rightPressed and tab[pos] == 1){
+			tab[pos] = -1;
 		}
 		
 	}

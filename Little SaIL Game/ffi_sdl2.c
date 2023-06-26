@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 
 int initSDL2(){
 	return SDL_Init(SDL_INIT_VIDEO);
@@ -90,6 +91,10 @@ int getMOUSEBUTTONDOWN(){
 	return SDL_MOUSEBUTTONDOWN;
 }
 
+int getMOUSEBUTTONUP(){
+	return SDL_MOUSEBUTTONUP;
+}
+
 int getTypeEvent(SDL_Event* ev){
 	return (*ev).type;
 }
@@ -104,6 +109,10 @@ int getMouseButton(SDL_Event* ev){
 
 int getMOUSEBUTTONLEFTCODE(){
 	return SDL_BUTTON_LEFT;
+}
+
+int getMOUSEBUTTONRIGHTCODE(){
+	return SDL_BUTTON_RIGHT;
 }
 
 SDL_bool getSdlTrue(){

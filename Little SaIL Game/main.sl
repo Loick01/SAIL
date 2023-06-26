@@ -86,9 +86,20 @@ process Main(){
 	var sdltrue : sdlbool = getSdlTrue();
 	var nullPtr : ptr_void = getNULLptr();
 	
+	var imgSurface : sdlsurface = loadImg("sail.svg"); // Pas sur que ca prenne du svg, tester au moins png, jpg et svg
+	var imgTexture : sdltexture = createTextureFromSurface(r,imgSurface);
+	var imgWidth : ptr_int = createIntValue(0);
+	var imgHeight : ptr_int = createIntValue(0);
+	
+	getSizeTexture(imgTexture,nullPtr,nullPtr,imgWidth,imgHeight);
+	var iW : int = getIntValue(imgWidth) / 2;
+	var iH : int = getIntValue(imgHeight) / 2; // L'image est trop grande, donc on réduit le rectangle dans lequel elle s'affiche
+	var imgRect : sdlrect = createRect(400 - iW / 2,600 - iH + 20,iW,iH); // x = window width - iW / 2 , y = window height - iH
+	
 	loop{
-		setColor(r, 25, 144, 38, 255);
+		setColor(r, 255, 255, 255, 255);
 		setBackgroundColor(r);
+		renderCopy(r,imgTexture,nullPtr,imgRect); // Affiche le logo de SaIL
 		
 		setColor(r,13, 6, 69,255);
 		for h in (0,4){ // (4 exclus)
@@ -131,6 +142,12 @@ process Main(){
 			}
 		}
 	}
+	
+	freeSurface(imgSurface);
+	destroyTexture(imgTexture);
+	deletePointer(imgWidth);
+	deletePointer(imgHeight);
+	deletePointer(imgRect);
 	
 	for deleteCount in (0,4){ // (4 exclus)
 		deletePointer(tabRectText[deleteCount]);
