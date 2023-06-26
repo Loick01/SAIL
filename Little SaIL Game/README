@@ -19,10 +19,11 @@ Fourmi de Langton :
 	Si la fourmi est sur une case verte, elle tourne de 90° vers la gauche et avance de une case
 	Dans les deux cas, la fourmi inverse la couleur de la case qu'elle quitte.
 
-Jeu de la vie : (Problème avec la fermeture de la fenêtre)
+Jeu de la vie :
 	Grille de taille 40*30, les cases sont blanches (cellule morte) ou vertes (cellules vivantes).
 	Par défaut, la grille est vide.
 	
 	Au lancement, cliquer sur la barre d'espace, puis cliquer sur les cellules pour les rendre vivantes.
+	Possibilité de maintenir le clic gauche pour rendre les cellules vivantes, et de maintenir le clic droit pour les rendre mortes.
 	Puis appuyez à nouveau sur espace pour relancer.
 	Répeter à volonté.
