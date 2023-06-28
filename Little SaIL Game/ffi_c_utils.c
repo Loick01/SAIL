@@ -30,6 +30,13 @@ void setIntValue(int* p, int val){
 	*p = val;
 }
 
+char* intToString(int v){ // Renvoie char* correspondant à l'entier dans la table ASCII
+	char* res = malloc(sizeof(char*)*2);
+	res[0] = (char) v;
+	res[1] = '\0';
+	return res;
+}
+
 char* stringOfInt(int v){
 	int nb; // Compte le nombre de chiffre composant le paramètre v
 	if (v == 0){
@@ -54,8 +61,11 @@ char* stringConcat(char* s1, char* s2){
 	return res;
 }
 
-int square(int v){
-	return v*v;
+char* getCharAt(char* s, int n){ // On suppose que n < strlen(s)
+	char* res = malloc(sizeof(char*)*2);
+	res[0] = s[n];
+	res[1] = '\0';
+	return res;
 }
 
 int squareroot(int v){

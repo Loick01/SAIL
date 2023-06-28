@@ -6,6 +6,7 @@ import jeu1
 import jeu2
 import langton
 import jeu_de_la_vie
+import jeu3
 
 process Main(){
 	setAleatoire();
@@ -37,56 +38,64 @@ process Main(){
 	var my : ptr_int = createIntValue(0);
 	var point : sdlpoint = createPoint(0,0);
 	
-	var mut tabButton : array<sdlrect;4>;
-	for i in (0,4){ // (4 exclus)
-		var rct : sdlrect = createRect(20,20+(i*100),600,80);
+	var mut tabButton : array<sdlrect;5>;
+	for i in (0,5){ // (5 exclus)
+		var rct : sdlrect = createRect(20 + (i%2)*350, 20+(i/2)*90,300,70);
 		tabButton[i] = rct;
 	}
 	
 	
-	
-	// On crée les surface à la main vu que pour l'instant on ne peut pas faire de tableau de string
 	var button1_name : string  = "Jeu 1";
 	var button2_name : string  = "Jeu 2";
-	var button3_name : string  = "Fourmi de Langton";
+	var button3_name : string  = "Jeu 3";
 	var button4_name : string  = "Jeu de la vie";
+	var button5_name : string  = "Fourmi de Langton";
 	var button_num : int = 0;
-	var mut tabSurfaces : array<sdlsurface;4>;
-	var mut tabRectText : array<sdlrect;4>;
+	var mut tabSurfaces : array<sdlsurface;5>;
+	var mut tabRectText : array<sdlrect;5>;
 	var textRect : sdlrect;
 	var surface : sdlsurface;
 	
+	// Impossible de faire une boucle ici. On est obligé de créer les surfaces à la main, vu que pour l'instant on ne peut pas faire de tableau de string (problème pour le texte 
+	// sur le bouton). Si on a le temps, essayer de faire mieux
 	getSizeText(font,button1_name,widthText,heightText);
-	textRect = createRect(30, 20+(button_num*100), getIntValue(widthText), getIntValue(heightText));
+	textRect = createRect(30 + (button_num%2)* 350, 30+(button_num/2)*90, getIntValue(widthText), getIntValue(heightText));
 	surface = renderTextSolid(font, button1_name, white_color);
 	tabSurfaces[button_num] = surface;
 	tabRectText[button_num] = textRect;
 	button_num = button_num + 1;
 	
 	getSizeText(font,button2_name,widthText,heightText);
-	textRect = createRect(30, 20+(button_num*100), getIntValue(widthText), getIntValue(heightText));
+	textRect = createRect(30 + (button_num%2)* 350, 30+(button_num/2)*90, getIntValue(widthText), getIntValue(heightText));
 	surface = renderTextSolid(font, button2_name, white_color);
 	tabSurfaces[button_num] = surface;
 	tabRectText[button_num] = textRect;
 	button_num = button_num + 1;
 	
 	getSizeText(font,button3_name,widthText,heightText);
-	textRect = createRect(30, 20+(button_num*100), getIntValue(widthText), getIntValue(heightText));
+	textRect = createRect(30 + (button_num%2)* 350, 30+(button_num/2)*90, getIntValue(widthText), getIntValue(heightText));
 	surface = renderTextSolid(font, button3_name, white_color);
 	tabSurfaces[button_num] = surface;
 	tabRectText[button_num] = textRect;
 	button_num = button_num + 1;
 	
 	getSizeText(font,button4_name,widthText,heightText);
-	textRect = createRect(30, 20+(button_num*100), getIntValue(widthText), getIntValue(heightText));
+	textRect = createRect(30 + (button_num%2)* 350, 30+(button_num/2)*90, getIntValue(widthText), getIntValue(heightText));
 	surface = renderTextSolid(font, button4_name, white_color);
+	tabSurfaces[button_num] = surface;
+	tabRectText[button_num] = textRect;
+	button_num = button_num + 1;
+	
+	getSizeText(font,button5_name,widthText,heightText);
+	textRect = createRect(30 + (button_num%2)* 350, 30+(button_num/2)*90, getIntValue(widthText), getIntValue(heightText));
+	surface = renderTextSolid(font, button5_name, white_color);
 	tabSurfaces[button_num] = surface;
 	tabRectText[button_num] = textRect;
 	
 	var sdltrue : sdlbool = getSdlTrue();
 	var nullPtr : ptr_void = getNULLptr();
 	
-	var imgSurface : sdlsurface = loadImg("sail.svg"); // Pas sur que ca prenne du svg, tester au moins png, jpg et svg
+	var imgSurface : sdlsurface = loadImg("sail.svg"); // La librairie SDL_image permet plusieurs formats, dont svg, png, jpeg.
 	var imgTexture : sdltexture = createTextureFromSurface(r,imgSurface);
 	var imgWidth : ptr_int = createIntValue(0);
 	var imgHeight : ptr_int = createIntValue(0);
@@ -102,7 +111,7 @@ process Main(){
 		renderCopy(r,imgTexture,nullPtr,imgRect); // Affiche le logo de SaIL
 		
 		setColor(r,13, 6, 69,255);
-		for h in (0,4){ // (4 exclus)
+		for h in (0,5){ // (5 exclus)
 			drawRect(r,tabButton[h]);			
 			var texture : sdltexture = createTextureFromSurface(r,tabSurfaces[h]);
 			renderCopy(r, texture, nullPtr, tabRectText[h]);
@@ -122,7 +131,7 @@ process Main(){
 				if (getMouseButton(ev) == sdlbuttonleft){
 					getMousePosition(mx,my);
 					setPointValues(point,getIntValue(mx),getIntValue(my));
-					for c in (0,4){ // (4 exclus)
+					for c in (0,5){ // (5 exclus)
 						if (pointInRect(point,tabButton[c]) == 1){
 							if (c == 0){
 								jeu1(r);
@@ -131,10 +140,13 @@ process Main(){
 								jeu2(r);
 							}
 							if (c == 2){
-								langton(r);
+								jeu3(r);
 							}		
 							if (c == 3){
 								jeu_de_la_vie(r);
+							}		
+							if (c == 4){
+								langton(r);
 							}						
 						}
 					}
@@ -149,14 +161,14 @@ process Main(){
 	deletePointer(imgHeight);
 	deletePointer(imgRect);
 	
-	for deleteCount in (0,4){ // (4 exclus)
+	for deleteCount in (0,5){ // (5 exclus)
 		deletePointer(tabRectText[deleteCount]);
 		freeSurface(tabSurfaces[deleteCount]);
 	}
 	
 	print_string("Sortie de la boucle\n");
 	
-	for k in (0,4){ // (4 exclus)
+	for k in (0,5){ // (5 exclus)
 		deletePointer(tabButton[k]);
 	}
 	
@@ -168,6 +180,7 @@ process Main(){
 	deletePointer(heightText);
 	
 	deletePointer(ev);
+	
 	deleteRenderer(r); // Attention : Toujours supprimer le renderer avant la window
 	deleteWindow(w);
 	

@@ -3,6 +3,10 @@ import sailor_sdl2
 import sailor_c_utils
 
 
+method square(v : int) : int{
+	return v*v;
+}
+
 method printOnScreen(r : renderer, score : int) : int{
 	var font : sdlfont = openFont("roboto-bold.ttf", 30); // Déplacer toutes ces valeurs (pour ne pas avoir à les créer à chaque frame)
 	var color : sdlcolor = createColor(255,255,255,255);

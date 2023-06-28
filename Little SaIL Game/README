@@ -1,8 +1,7 @@
 
 Pour compiler :
-gcc -c FFI_SDL2.c
+gcc -c ffi_sdl2.c ffi_c_utils.c
 dune exec sailor -- ./main.sl
-(Pour ce commit, le menu n'est pas encore fait, donc modifier les fonctions appelés dans main.sl)
 
 Jeu 1 :
 Appuyer sur la barre d'espace lorsque la barre noire est dans la zone bleue
@@ -10,20 +9,24 @@ Appuyer sur la barre d'espace lorsque la barre noire est dans la zone bleue
 Jeu 2 :
 Controler le carré blanc avec la souris et esquiver la zone bleue
 
+Jeu 3 : 
+Taper au clavier la lettre s'affichant en blanc sur la fenêtre
+
 Fourmi de Langton :
-	
 	Grille de taille 80*60, les cases sont blanches ou vertes.
-	Initialement la grille est blanche, la fourmi est au centre (case bleu).
+	Initialement la grille est blanche, la fourmi est au centre (case noir).
 	
 	Si la fourmi est sur une case blanche, elle tourne de 90° vers la droite et avance de une case
 	Si la fourmi est sur une case verte, elle tourne de 90° vers la gauche et avance de une case
 	Dans les deux cas, la fourmi inverse la couleur de la case qu'elle quitte.
 
-Jeu de la vie :
+Jeu de la vie : (Problème avec la fermeture de la fenêtre)
 	Grille de taille 40*30, les cases sont blanches (cellule morte) ou vertes (cellules vivantes).
 	Par défaut, la grille est vide.
 	
-	Au lancement, cliquer sur la barre d'espace, puis cliquer sur les cellules pour les rendre vivantes.
-	Possibilité de maintenir le clic gauche pour rendre les cellules vivantes, et de maintenir le clic droit pour les rendre mortes.
+	Au lancement, cliquer sur la barre d'espace, puis :
+		Maintenir le clic gauche les cellules pour les rendre vivantes
+		Maintenir le clic droit les cellules pour les rendre mortes
+		
 	Puis appuyez à nouveau sur espace pour relancer.
 	Répeter à volonté.

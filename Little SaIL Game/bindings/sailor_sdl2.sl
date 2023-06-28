@@ -11,6 +11,7 @@ type sdltexture
 type sdlfont
 type sdlcolor
 type sdlbool
+type sdlkeycode
 	
 extern "ffi_sdl2.o SDL2 SDL2_ttf SDL2_image" {
 	method initSDL2() : int;
@@ -70,6 +71,9 @@ extern "ffi_sdl2.o SDL2 SDL2_ttf SDL2_image" {
 	
 	method getTypeEvent(ev : sdlevent) : sdleventcode;
 	method getScancodeEvent(ev : sdlevent) : sdleventcode;
+	
+	method getKeyCode(ev : sdlevent) : sdlkeycode;
+	method getKeyName(kc : sdlkeycode) : string = "SDL_GetKeyName";
 	
 	method getMousePosition(x : ptr_int, y : ptr_int) = "SDL_GetMouseState";
 	

@@ -103,6 +103,10 @@ int getScancodeEvent(SDL_Event* ev){
 	return (*ev).key.keysym.scancode;
 }
 
+SDL_Keycode getKeyCode(SDL_Event* ev){
+	return ev->key.keysym.sym;
+}
+
 int getMouseButton(SDL_Event* ev){
 	return (*ev).button.button; 
 }

@@ -13,10 +13,12 @@ extern "ffi_c_utils.o m" { // m is for the math library ( -lm option)
 	
 	method stringOfInt(v : int) : string;
 	method stringConcat(s1 : string, s2 : string) : string;
+	method intToString(v : int) : string;
+	method getCharAt(s : string, n : int) : string;
+	method stringEqual(s1 : string , s2 : string) : int = "strcmp";
 
 	method deletePointer(p : ptr_void) = "free";
 	
-	method square(v : int) : int;
 	method squareroot(v : int) : int;
 	method maxInt(v1 : int, v2 : int) : int
 }
